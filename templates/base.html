@@ -8,15 +8,15 @@
 </head>
 <body>
     <header class="app-header">
-        <h1 class="app-title">Lost Dogs: The Way</h1>
-
-        <!-- Разметка профиля в хедере, выравнивание по правой стороне -->
-        <div class="account-header">
+        <h2 class="app-title">Lost Dogs: The Way</h2>
             <div class="profile-picture">
                 <img src="{{ url_for('static', filename='images/profile_pic.png') }}" alt="Profile Picture">
             </div>
+        <!-- Разметка профиля в хедере, выравнивание по правой стороне -->
+        <div class="account-header">
+
             <div class="account-info">
-                <h1>{{ username }}</h1> <!-- Имя пользователя из базы данных -->
+                <h3>{{ username }}</h3> <!-- Имя пользователя из базы данных -->
                 <div class="line"></div>
                 <div class="account-stats">
                     <div class="value-stats">

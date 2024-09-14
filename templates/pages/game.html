@@ -3,17 +3,17 @@
 {% block title %}Игра{% endblock %}
 
 {% block content %}
-<div class="container game-container d-flex flex-column align-items-center justify-content-center mt-3" style="min-height: 80vh;">
-
+<div class="container game-container d-flex flex-column align-items-start justify-content-center mt-3" style="min-height: 80vh;">
     <!-- Кнопка "Назад" в левом верхнем углу -->
-    <a href="{{ back_url or url_for('index') }}" class="btn-back">Назад</a>
+    <a href="{{ url_for('index') }}" class="btn-back">Назад</a>
 
-    <div class="text-center mb-3">
+    <!-- Выравнивание текста по левой стороне -->
+    <div class="text-left mb-3">
         <h2>{{ round.description }}</h2>
         <p>Цель: {{ round.target }}</p>
     </div>
 
-    <!-- Собственная карусель -->
+    <!-- Карусель -->
     <div class="carousel-wrapper">
         <div class="carousel-inner">
             {% for card in cards %}

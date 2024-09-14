@@ -3,13 +3,13 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background: linear-gradient(180deg, #1e90ff 20%, #1c1c1c 80%);
+    background: linear-gradient(180deg, #1e90ff 20%, #1c1c1c 80%); /* Градиент */
     color: white;
 }
 
 /* Стили для хедера */
 .app-header {
-    font-size: 1.2rem;
+    font-size: 1rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -40,7 +40,7 @@ body {
     position: relative;
 }
 
-/* Стиль карусели */
+/* Стили карусели */
 .carousel-wrapper {
     position: relative;
     max-width: 300px;
@@ -84,11 +84,11 @@ body {
 
 .carousel-control-prev,
 .carousel-control-next {
-    font-size: 2rem;
+    font-size: 1.5rem; /* Уменьшены стрелки */
     color: white;
     background: rgba(0, 0, 0, 0.7);
-    width: 40px;
-    height: 40px;
+    width: 30px; /* Уменьшены размеры стрелок */
+    height: 30px;
     display: flex;
     justify-content: center;
     align-items: center;
