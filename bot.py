@@ -19,7 +19,7 @@ async def send_welcome(message: types.Message):
 
     logging.info(f"Команда /start от {username} с ID {user_id}")
 
-    web_app_url = f"https://sfr4jh-194-35-116-160.ru.tuna.am"
+    web_app_url = f"https://uohvxb-194-35-116-160.ru.tuna.am"
     web_app_button = KeyboardButton(text="Открыть игру", web_app=WebAppInfo(url=web_app_url))
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(web_app_button)
 

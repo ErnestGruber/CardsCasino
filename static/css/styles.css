@@ -16,63 +16,91 @@ body {
     padding: 0.5rem;
 }
 
-.app-header .btn {
-    font-size: 0.9rem;
-    padding: 0.2rem 0.5rem;
+/* Стили для кнопки "Назад" */
+.btn-back {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 1rem;
+    color: white;
+    background-color: #007bff;
+    padding: 5px 15px;
+    border-radius: 5px;
+    text-decoration: none;
 }
 
-.app-header .user-info {
-    font-size: 0.9rem;
-    text-align: right;
+.btn-back:hover {
+    background-color: #0056b3;
 }
 
 /* Центрирование контейнера карточек */
 .container {
     padding: 15px;
     text-align: center;
+    position: relative;
 }
 
-/* Анимация для картинок */
-.carousel-item {
-    transition: opacity 0.6s ease, transform 0.6s ease;
+/* Стиль карусели */
+.carousel-wrapper {
+    position: relative;
+    max-width: 300px;
+    margin: 0 auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .carousel-inner {
-    max-width: 300px;
-    margin: 0 auto;
+    display: flex;
+    position: relative;
+    transition: transform 0.5s ease-in-out;
 }
 
-/* Предотвращение расширения картинок */
-.carousel-item img {
-    max-height: 250px;
-    object-fit: contain; /* Сохраняет соотношение сторон изображения */
-    margin: 0 auto;
-    display: block;
+.carousel-item {
+    min-width: 100%;
+    transition: opacity 0.5s ease;
+    opacity: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 
-/* Кнопки перелистывания */
-.carousel-control-prev,
-.carousel-control-next {
+.carousel-item.active {
+    opacity: 1;
+    position: relative;
+    z-index: 1;
+}
+
+/* Стрелки */
+.carousel-nav {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 30px;
-    height: 30px;
-    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+    font-size: 2rem;
+    color: white;
+    background: rgba(0, 0, 0, 0.7);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     border-radius: 50%;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
 }
 
-.custom-prev {
-    left: -40px; /* Смещение стрелки влево за пределы карусели */
-}
-
-.custom-next {
-    right: -40px; /* Смещение стрелки вправо за пределы карусели */
-}
-
-.carousel-control-prev-icon,
-.carousel-control-next-icon {
-    background-size: 100%, 100%;
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+    background-color: rgba(0, 0, 0, 0.9);
 }
 
 /* Кнопка голосования */
@@ -82,6 +110,7 @@ body {
     border-radius: 25px;
     padding: 10px 20px;
     font-size: 1.2rem;
+    color: white;
 }
 
 .btn-primary:hover {

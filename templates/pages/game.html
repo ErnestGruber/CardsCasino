@@ -4,37 +4,35 @@
 
 {% block content %}
 <div class="container game-container d-flex flex-column align-items-center justify-content-center mt-3" style="min-height: 80vh;">
+
+    <!-- Кнопка "Назад" в левом верхнем углу -->
+    <a href="{{ back_url or url_for('index') }}" class="btn-back">Назад</a>
+
     <div class="text-center mb-3">
         <h2>{{ round.description }}</h2>
         <p>Цель: {{ round.target }}</p>
     </div>
 
-    <!-- Уменьшенная карусель для карточек -->
-    <div class="carousel-wrapper position-relative" style="max-width: 300px;">
-        <div id="cardCarousel" class="carousel slide" data-ride="carousel">
-            <div class="carousel-inner">
-                {% for card in cards %}
-                <div class="carousel-item {% if loop.first %}active{% endif %}">
-                    <div class="d-flex justify-content-center">
-                        <img src="{{ url_for('static', filename=card.image_path) }}" class="d-block img-fluid card-img" alt="Карточка {{ loop.index }}" style="max-height: 250px;">
-                    </div>
-                    <div class="carousel-caption d-none d-md-block">
-                        <h5>{{ card.text }}</h5>
-                    </div>
+    <!-- Собственная карусель -->
+    <div class="carousel-wrapper">
+        <div class="carousel-inner">
+            {% for card in cards %}
+            <div class="carousel-item {% if loop.first %}active{% endif %}" data-card-id="{{ card.id }}">
+                <div class="d-flex justify-content-center">
+                    <img src="{{ url_for('static', filename=card.image_path) }}" class="d-block img-fluid card-img" alt="Карточка {{ loop.index }}" style="max-height: 250px;">
                 </div>
-                {% endfor %}
+                <div class="carousel-caption">
+                    <h5>{{ card.text }}</h5>
+                </div>
             </div>
+            {% endfor %}
         </div>
 
-        <!-- Кнопки для перелистывания вынесены за пределы изображения -->
-        <a class="carousel-control-prev custom-prev" href="#cardCarousel" role="button" data-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="sr-only">Previous</span>
-        </a>
-        <a class="carousel-control-next custom-next" href="#cardCarousel" role="button" data-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="sr-only">Next</span>
-        </a>
+        <!-- Стрелки для навигации -->
+        <div class="carousel-nav">
+            <span class="carousel-control-prev" onclick="prevCard()">❮</span>
+            <span class="carousel-control-next" onclick="nextCard()">❯</span>
+        </div>
     </div>
 
     <!-- Кнопка для голосования -->
@@ -44,6 +42,28 @@
 </div>
 
 <script>
+    let currentCardIndex = 0;
+    const cards = document.querySelectorAll('.carousel-item');
+
+    function showCard(index) {
+        cards.forEach((card, i) => {
+            card.classList.remove('active');
+            if (i === index) {
+                card.classList.add('active');
+            }
+        });
+    }
+
+    function prevCard() {
+        currentCardIndex = (currentCardIndex - 1 + cards.length) % cards.length;
+        showCard(currentCardIndex);
+    }
+
+    function nextCard() {
+        currentCardIndex = (currentCardIndex + 1) % cards.length;
+        showCard(currentCardIndex);
+    }
+
     function voteForCard() {
         const activeCard = document.querySelector('.carousel-item.active');
         const cardId = activeCard.getAttribute('data-card-id');

@@ -2,16 +2,12 @@
 
 {% block title %}Главная{% endblock %}
 
-<!-- Отключаем футер на главной странице -->
-{% set show_footer = False %}
-
 {% block content %}
-    <div class="text-center">
-        <h2>Привет, {{ username }}!</h2>
-        <div class="mb-4">
-            <p>NOT: {{ not_tokens }}</p>
-            <p>BONES: {{ bones }}</p>
-        </div>
-        <button class="btn btn-success" onclick="window.location.href='{{ url_for('game') }}'">Играть</button>
-    </div>
+<div class="container">
+    <h2 style="text-align: left;">Добро пожаловать, {{ username }}!</h2>
+    <p>Ваши токены: BONES - {{ bones }}, NOT - {{ not_tokens }}</p>
+
+    <!-- Кнопка перехода на страницу игры -->
+    <a href="{{ url_for('game') }}" class="btn btn-lg btn-primary">Играть</a> <!-- Одинаковый стиль с кнопкой "Проголосовать" -->
+</div>
 {% endblock %}
