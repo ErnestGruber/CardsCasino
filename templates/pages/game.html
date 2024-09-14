@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Игра{% endblock %}
+
+{% block content %}
+    <div class="round-info">
+        <h2>Раунд: {{ round.description }}</h2>
+        <p>Цель: {{ round.target }}</p>
+    </div>
+
+    <div class="cards">
+        {% for card in cards %}
+            <div class="card">
+                <img src="{{ card.image_url }}" alt="Карточка">
+                <p>{{ card.text }}</p>
+                <button onclick="chooseCard({{ card.id }})">Выбрать</button>
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        function chooseCard(cardId) {
+            fetch(`/choose_card/${cardId}`, {
+                method: 'POST'
+            }).then(response => {
+                if (response.ok) {
+                    alert("Вы выбрали карточку!");
+                } else {
+                    alert("Произошла ошибка!");
+                }
+            });
+        }
+    </script>
+{% endblock %}

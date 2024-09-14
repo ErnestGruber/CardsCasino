@@ -1,0 +1,7 @@
+Flask==2.0.1
+Flask-SQLAlchemy==2.5.1
+SQLAlchemy==1.4.46
+Flask-Admin==1.5.8
+python-telegram-bot==13.7
+Jinja2==3.0.3
+aiogram==2.22.2
