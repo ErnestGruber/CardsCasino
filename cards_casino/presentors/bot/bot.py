@@ -1,11 +1,11 @@
 import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
-from models import User, db
-from config import Config
+from cards_casino.infrastructure.database.models import User, db
+from cards_casino.common.config import Config
 from sqlalchemy.exc import IntegrityError
 import asyncio
-from app import app  # Импортируем Flask приложение для использования контекста
+from cards_casino.presentors.rest.app import app  # Импортируем Flask приложение для использования контекста
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)

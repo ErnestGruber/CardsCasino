@@ -1,8 +1,8 @@
 import logging
 from flask import Flask, redirect, url_for, session
-from config import Config
-from models import db, User, Round, Card, Bet
-from admin import setup_admin
+from cards_casino.common.config import Config
+from cards_casino.infrastructure.database.tables import db, User, Round, Card, Bet
+from cards_casino.presentors.rest.admin import setup_admin
 
 app = Flask(__name__)
 app.config.from_object(Config)
