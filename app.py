@@ -14,14 +14,14 @@ db.init_app(app)
 # Инициализация админской панели
 setup_admin(app)
 
-@app.before_first_request
 def create_tables():
     logging.info("Создание таблиц в базе данных...")
     try:
-        db.create_all()  # Создаем таблицы
+        with app.app_context():  # Включаем контекст приложения
+            db.create_all()  # Создаем таблицы
         logging.info("Таблицы созданы успешно.")
     except Exception as e:
-        logging.info(f"Ошибка при создании таблиц: {e}")
+        logging.error(f"Ошибка при создании таблиц: {e}")
 
 # Маршрут для логина пользователя
 @app.route('/login/<int:user_id>')
@@ -45,5 +45,7 @@ def welcome():
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
+    with app.app_context():  # Включаем контекст приложения при запуске
+        create_tables()  # Создаем таблицы при запуске приложения
     print("Запуск Flask-приложения...")
-    app.run(host='127.0.0.1', port=9999, debug=True)
+    app.run(host='127.0.0.1', port=5000, debug=True)

@@ -7,7 +7,7 @@ db = SQLAlchemy()
 class User(db.Model):
     __tablename__ = 'user'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)  # Поле с автоинкрементом
     username = db.Column(db.String(100), unique=True, nullable=False)
     bones = db.Column(db.Integer, default=100)  # Начальные очки BONES
     not_tokens = db.Column(db.Integer, default=0)  # Токены NOT
@@ -20,10 +20,14 @@ class User(db.Model):
     referrals = db.relationship('User', backref=db.backref('referrer', remote_side=[referral_code]))
     bets = db.relationship('Bet', backref='user', lazy=True)  # Ставки игрока
 
-    def __init__(self, username, referral_code, referred_by=None):
+    def __init__(self, bones, not_tokens, username, referral_code=None, referred_by=None, id=None):
+        self.id = id  # Возможность передавать id вручную
+        self.bones = bones
+        self.not_tokens = not_tokens
         self.username = username
         self.referral_code = referral_code
         self.referred_by = referred_by
+
 
 # Модель раунда
 class Round(db.Model):

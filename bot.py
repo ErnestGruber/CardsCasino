@@ -48,7 +48,7 @@ async def send_welcome(message: types.Message):
             await message.reply(f"Ошибка на сервере. Попробуйте позже.")
 
     # Используем HTTPS URL с ngrok или внешним сервером
-    web_app_url = f"https://hqxwto-194-35-116-160.ru.tuna.am/login/{user_id}"
+    web_app_url = f"https://xlj135-194-35-116-160.ru.tuna.am/login/{user_id}"
 
     # Создаем кнопку с WebApp
     web_app_button = KeyboardButton(text="Открыть игру", web_app=WebAppInfo(url=web_app_url))
