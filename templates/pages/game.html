@@ -3,32 +3,59 @@
 {% block title %}Игра{% endblock %}
 
 {% block content %}
-    <div class="round-info">
-        <h2>Раунд: {{ round.description }}</h2>
+<div class="container game-container d-flex flex-column align-items-center justify-content-center mt-3" style="min-height: 80vh;">
+    <div class="text-center mb-3">
+        <h2>{{ round.description }}</h2>
         <p>Цель: {{ round.target }}</p>
     </div>
 
-    <div class="cards">
-        {% for card in cards %}
-            <div class="card">
-                <img src="{{ card.image_url }}" alt="Карточка">
-                <p>{{ card.text }}</p>
-                <button onclick="chooseCard({{ card.id }})">Выбрать</button>
+    <!-- Уменьшенная карусель для карточек -->
+    <div class="carousel-wrapper position-relative" style="max-width: 300px;">
+        <div id="cardCarousel" class="carousel slide" data-ride="carousel">
+            <div class="carousel-inner">
+                {% for card in cards %}
+                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                    <div class="d-flex justify-content-center">
+                        <img src="{{ url_for('static', filename=card.image_path) }}" class="d-block img-fluid card-img" alt="Карточка {{ loop.index }}" style="max-height: 250px;">
+                    </div>
+                    <div class="carousel-caption d-none d-md-block">
+                        <h5>{{ card.text }}</h5>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
-        {% endfor %}
+        </div>
+
+        <!-- Кнопки для перелистывания вынесены за пределы изображения -->
+        <a class="carousel-control-prev custom-prev" href="#cardCarousel" role="button" data-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="sr-only">Previous</span>
+        </a>
+        <a class="carousel-control-next custom-next" href="#cardCarousel" role="button" data-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="sr-only">Next</span>
+        </a>
     </div>
 
-    <script>
-        function chooseCard(cardId) {
-            fetch(`/choose_card/${cardId}`, {
-                method: 'POST'
-            }).then(response => {
-                if (response.ok) {
-                    alert("Вы выбрали карточку!");
-                } else {
-                    alert("Произошла ошибка!");
-                }
-            });
-        }
-    </script>
+    <!-- Кнопка для голосования -->
+    <div class="text-center mt-4">
+        <button class="btn btn-primary btn-lg" onclick="voteForCard()">Проголосовать 1 BONES</button>
+    </div>
+</div>
+
+<script>
+    function voteForCard() {
+        const activeCard = document.querySelector('.carousel-item.active');
+        const cardId = activeCard.getAttribute('data-card-id');
+        fetch(`/choose_card/${cardId}`, {
+            method: 'POST'
+        }).then(response => {
+            if (response.ok) {
+                alert("Вы проголосовали за карточку!");
+            } else {
+                alert("Произошла ошибка при голосовании.");
+            }
+        });
+    }
+</script>
 {% endblock %}

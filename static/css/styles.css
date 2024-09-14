@@ -1,0 +1,89 @@
+/* Общие стили */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(180deg, #1e90ff 20%, #1c1c1c 80%);
+    color: white;
+}
+
+/* Стили для хедера */
+.app-header {
+    font-size: 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+}
+
+.app-header .btn {
+    font-size: 0.9rem;
+    padding: 0.2rem 0.5rem;
+}
+
+.app-header .user-info {
+    font-size: 0.9rem;
+    text-align: right;
+}
+
+/* Центрирование контейнера карточек */
+.container {
+    padding: 15px;
+    text-align: center;
+}
+
+/* Анимация для картинок */
+.carousel-item {
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.carousel-inner {
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+/* Предотвращение расширения картинок */
+.carousel-item img {
+    max-height: 250px;
+    object-fit: contain; /* Сохраняет соотношение сторон изображения */
+    margin: 0 auto;
+    display: block;
+}
+
+/* Кнопки перелистывания */
+.carousel-control-prev,
+.carousel-control-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+}
+
+.custom-prev {
+    left: -40px; /* Смещение стрелки влево за пределы карусели */
+}
+
+.custom-next {
+    right: -40px; /* Смещение стрелки вправо за пределы карусели */
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-size: 100%, 100%;
+}
+
+/* Кнопка голосования */
+.btn-primary {
+    background-color: #007bff;
+    border: none;
+    border-radius: 25px;
+    padding: 10px 20px;
+    font-size: 1.2rem;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
