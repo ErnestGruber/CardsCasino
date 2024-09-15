@@ -34,26 +34,28 @@ class Round(db.Model):
     __tablename__ = 'round'
 
     id = db.Column(db.Integer, primary_key=True)
-    description = db.Column(db.String(255), nullable=False)  # Описание раунда
-    target = db.Column(db.String(50), nullable=False)  # Цель раунда: популярная, средняя или непопулярная карточка
-    start_time = db.Column(db.DateTime, nullable=False)  # Время начала раунда
-    end_time = db.Column(db.DateTime, nullable=False)  # Время окончания раунда
-    results_calculated = db.Column(db.Boolean, default=False)  # Подсчитаны ли результаты
-    cards = db.relationship('Card', backref='round', lazy=True)  # Связь с карточками
+    description = db.Column(db.String(255), nullable=False)
+    target = db.Column(db.String(255), nullable=False)  # Цель раунда (популярная, средняя, непопулярная)
+    start_time = db.Column(db.DateTime, nullable=False)
+    end_time = db.Column(db.DateTime, nullable=False)
+    is_active = db.Column(db.Boolean, default=False)  # Новый флаг, указывающий, активен ли раунд
+    cards = db.relationship('Card', backref='round', lazy=True)
 
-    def __init__(self, description, target, start_time, end_time):
+    def __init__(self, description, target, start_time, end_time, is_active=False):
         self.description = description
         self.target = target
         self.start_time = start_time
         self.end_time = end_time
+        self.is_active = is_active
+
 
 # Модель карточки
 class Card(db.Model):
     __tablename__ = 'card'
 
     id = db.Column(db.Integer, primary_key=True)
-    image_url = db.Column(db.String(255), nullable=False)  # URL изображения
-    text = db.Column(db.String(255), nullable=False)  # Описание/текст карточки
+    image_url = db.Column(db.String(255), nullable=False)  # URL изображения карточки
+    text = db.Column(db.String(255), nullable=False)  # Описание карточки
     round_id = db.Column(db.Integer, db.ForeignKey('round.id'), nullable=False)  # Привязка к раунду
     total_bones = db.Column(db.Integer, default=0)  # Общее количество BONES, поставленных на карточку
     bets = db.relationship('Bet', backref='card', lazy=True)  # Ставки на карточку
@@ -62,6 +64,9 @@ class Card(db.Model):
         self.image_url = image_url
         self.text = text
         self.round_id = round_id
+
+    def __repr__(self):
+        return f'<Card {self.text}>'
 
 # Модель ставки
 class Bet(db.Model):
