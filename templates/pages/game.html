@@ -3,32 +3,79 @@
 {% block title %}Игра{% endblock %}
 
 {% block content %}
-    <div class="round-info">
-        <h2>Раунд: {{ round.description }}</h2>
+<div class="container game-container d-flex flex-column align-items-start justify-content-center mt-3" style="min-height: 80vh;">
+    <!-- Кнопка "Назад" в левом верхнем углу -->
+    <a href="{{ url_for('index') }}" class="btn-back">Назад</a>
+
+    <!-- Выравнивание текста по левой стороне -->
+    <div class="text-left mb-3">
+        <h2>{{ round.description }}</h2>
         <p>Цель: {{ round.target }}</p>
     </div>
 
-    <div class="cards">
-        {% for card in cards %}
-            <div class="card">
-                <img src="{{ card.image_url }}" alt="Карточка">
-                <p>{{ card.text }}</p>
-                <button onclick="chooseCard({{ card.id }})">Выбрать</button>
+    <!-- Карусель -->
+    <div class="carousel-wrapper">
+        <div class="carousel-inner">
+            {% for card in cards %}
+            <div class="carousel-item {% if loop.first %}active{% endif %}" data-card-id="{{ card.id }}">
+                <div class="d-flex justify-content-center">
+                    <img src="{{ url_for('static', filename=card.image_path) }}" class="d-block img-fluid card-img" alt="Карточка {{ loop.index }}" style="max-height: 250px;">
+                </div>
+                <div class="carousel-caption">
+                    <h5>{{ card.text }}</h5>
+                </div>
             </div>
-        {% endfor %}
+            {% endfor %}
+        </div>
+
+        <!-- Стрелки для навигации -->
+        <div class="carousel-nav">
+            <span class="carousel-control-prev" onclick="prevCard()">❮</span>
+            <span class="carousel-control-next" onclick="nextCard()">❯</span>
+        </div>
     </div>
 
-    <script>
-        function chooseCard(cardId) {
-            fetch(`/choose_card/${cardId}`, {
-                method: 'POST'
-            }).then(response => {
-                if (response.ok) {
-                    alert("Вы выбрали карточку!");
-                } else {
-                    alert("Произошла ошибка!");
-                }
-            });
-        }
-    </script>
+    <!-- Кнопка для голосования -->
+    <div class="text-center mt-4">
+        <button class="btn btn-primary btn-lg" onclick="voteForCard()">Проголосовать 1 BONES</button>
+    </div>
+</div>
+
+<script>
+    let currentCardIndex = 0;
+    const cards = document.querySelectorAll('.carousel-item');
+
+    function showCard(index) {
+        cards.forEach((card, i) => {
+            card.classList.remove('active');
+            if (i === index) {
+                card.classList.add('active');
+            }
+        });
+    }
+
+    function prevCard() {
+        currentCardIndex = (currentCardIndex - 1 + cards.length) % cards.length;
+        showCard(currentCardIndex);
+    }
+
+    function nextCard() {
+        currentCardIndex = (currentCardIndex + 1) % cards.length;
+        showCard(currentCardIndex);
+    }
+
+    function voteForCard() {
+        const activeCard = document.querySelector('.carousel-item.active');
+        const cardId = activeCard.getAttribute('data-card-id');
+        fetch(`/choose_card/${cardId}`, {
+            method: 'POST'
+        }).then(response => {
+            if (response.ok) {
+                alert("Вы проголосовали за карточку!");
+            } else {
+                alert("Произошла ошибка при голосовании.");
+            }
+        });
+    }
+</script>
 {% endblock %}

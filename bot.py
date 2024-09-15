@@ -56,7 +56,7 @@ async def send_welcome(message: types.Message):
 
     await message.answer("Нажмите кнопку ниже, чтобы открыть веб-приложение в Telegram:", reply_markup=keyboard)
 
-# Функция запуска бота
+# Запуск бота с логами и обработкой ошибок
 async def start_bot():
     logging.info("Запуск бота...")
     try:

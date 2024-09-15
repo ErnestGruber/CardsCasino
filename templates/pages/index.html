@@ -3,16 +3,11 @@
 {% block title %}Главная{% endblock %}
 
 {% block content %}
-    <div class="profile-info">
-        <h2>Привет, {{ username }}!</h2>
-        <p>Твои токены:</p>
-        <ul>
-            <li>NOT: {{ not_tokens }}</li>
-            <li>BONES: {{ bones }}</li>
-        </ul>
-    </div>
+<div class="container">
+    <h2 style="text-align: left;">Добро пожаловать, {{ username }}!</h2>
+    <p>Ваши токены: BONES - {{ bones }}, NOT - {{ not_tokens }}</p>
 
-    <div class="actions">
-        <button onclick="window.location.href='{{ url_for('game') }}'">Играть</button>
-    </div>
+    <!-- Кнопка перехода на страницу игры -->
+    <a href="{{ url_for('game') }}" class="btn btn-lg btn-primary">Играть</a> <!-- Одинаковый стиль с кнопкой "Проголосовать" -->
+</div>
 {% endblock %}
