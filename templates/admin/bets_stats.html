@@ -1,0 +1,23 @@
+{% extends 'admin/base.html' %}
+{% block body %}
+<h2>Статистика ставок</h2>
+<p>Всего ставок: {{ total_bets }}</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Карточка</th>
+            <th>Количество ставок</th>
+            <th>Процент</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for stat in stats %}
+        <tr>
+            <td>{{ stat.card }}</td>
+            <td>{{ stat.count }}</td>
+            <td>{{ stat.percentage }}%</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

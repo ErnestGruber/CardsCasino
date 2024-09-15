@@ -1,6 +1,7 @@
 import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
+from aiogram.filters import Command  # Импортируем фильтр для команд
 from models import User, db
 from config import Config
 from sqlalchemy.exc import IntegrityError
@@ -12,10 +13,10 @@ logging.basicConfig(level=logging.INFO)
 
 # Инициализация бота и диспетчера
 bot = Bot(token=Config.TELEGRAM_BOT_TOKEN)
-dp = Dispatcher(bot)
+dp = Dispatcher()  # В Dispatcher ничего не передаем
 
 # Обработчик команды /start
-@dp.message_handler(commands=['start'])
+@dp.message(Command("start"))  # Регистрация команды через фильтр Command
 async def send_welcome(message: types.Message):
     username = message.from_user.username
     user_id = message.from_user.id
@@ -48,11 +49,13 @@ async def send_welcome(message: types.Message):
             await message.reply(f"Ошибка на сервере. Попробуйте позже.")
 
     # Используем HTTPS URL с ngrok или внешним сервером
-    web_app_url = f"https://xlj135-194-35-116-160.ru.tuna.am/login/{user_id}"
+    web_app_url = f"https://qw1izr-194-35-116-160.ru.tuna.am/login/{user_id}"
 
     # Создаем кнопку с WebApp
     web_app_button = KeyboardButton(text="Открыть игру", web_app=WebAppInfo(url=web_app_url))
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(web_app_button)
+
+    # Исправленная структура для создания клавиатуры
+    keyboard = ReplyKeyboardMarkup(keyboard=[[web_app_button]], resize_keyboard=True)
 
     await message.answer("Нажмите кнопку ниже, чтобы открыть веб-приложение в Telegram:", reply_markup=keyboard)
 
@@ -60,7 +63,8 @@ async def send_welcome(message: types.Message):
 async def start_bot():
     logging.info("Запуск бота...")
     try:
-        await dp.start_polling()
+        await bot.delete_webhook(drop_pending_updates=True)  # Очищаем старые вебхуки, если они есть
+        await dp.start_polling(bot)  # Здесь передаем объект бота
     except Exception as e:
         logging.error(f"Ошибка при запуске polling: {e}")
         await bot.close()
