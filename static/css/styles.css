@@ -4,6 +4,7 @@ html,
 body {
   margin: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -91,8 +92,8 @@ body {
   gap: 1rem;
 }
 
-.profile_picture_holder {
-}
+/* .profile_picture_holder {
+} */
 
 .profile_picture {
   height: 45px;
@@ -265,8 +266,10 @@ body {
 }
 
 .button_vote {
-  margin: 0;
-  width: 60%;
+  margin-top: 20%;
+  width: 90%;
+  padding: 16px;
+  transition: 0.3s;
 }
 
 .base_button_wrapper {
@@ -338,7 +341,7 @@ body {
   align-items: center;
   justify-content: center;
   color: black;
-  /*visibility: hidden;*/
+  transition: 0.3s;
   opacity: 0;
 }
 

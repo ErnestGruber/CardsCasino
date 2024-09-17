@@ -7,30 +7,34 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <header class="app-header">
-        <h2 class="app-title">Lost Dogs: The Way</h2>
-            <div class="profile-picture">
-                <img src="{{ url_for('static', filename='images/profile_pic.png') }}" alt="Profile Picture">
-            </div>
-        <!-- Разметка профиля в хедере, выравнивание по правой стороне -->
-        <div class="account-header">
-
-            <div class="account-info">
-                <h3>{{ username }}</h3> <!-- Имя пользователя из базы данных -->
-                <div class="line"></div>
-                <div class="account-stats">
-                    <div class="value-stats">
-                        <span class="value">{{ not_tokens }}</span>
-                        <span class="icon">⚠️</span>
-                    </div>
-                    <div class="value-stats">
-                        <span class="value">{{ bones }}</span>
-                        <span>BONES</span>
-                    </div>
-                </div>
-            </div>
+    <header>
+        <div class="header_first_row">
+          <a href="" class="header_close_button">Закрыть</a>
+          <div class="header_naming">
+            <h1>Ваше название здесь</h1>
+            <p>описание приложения здесь</p>
+          </div>
         </div>
-    </header>
+        <div class="header_second_row">
+          <div class="profile_info">
+            <div class="profile_picture_holder">
+              <img
+                src="../static/images/-1__1.png"
+                alt=""
+                class="profile_picture"
+              />
+            </div>
+            <div class="profile_data_holder">
+              <h2 class="profile_data">Данные пользователя</h2>
+              <a href="" class="profile_storage">Ваш склад</a>
+            </div>
+          </div>
+          <div class="coin_counter">
+              <img src="" alt="" class="coin_image" />
+              <p class="coin_amount">123141241</p></span>
+          </div>
+        </div>
+      </header>
 
     <main>
         {% block content %}{% endblock %}

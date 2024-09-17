@@ -1,6 +1,5 @@
-{% extends "base.html" %}
-{% block title %}Игра{% endblock %}
-{% block content %}
+{% extends "base.html" %} {% block title %}Игра{% endblock %} {% block content
+%}
 <div
   class="container game-container d-flex flex-column align-items-start justify-content-center mt-3"
   style="min-height: 80vh"
@@ -15,7 +14,7 @@
 
   <!-- Обертка для карусели -->
   <div class="carousel-wrapper-container">
-        <!-- Форма для ввода ставки (изначально скрыта) -->
+    <!-- Форма для ввода ставки (изначально скрыта) -->
 
     <div class="carousel-wrapper">
       <div class="carousel-inner">
@@ -37,9 +36,7 @@
               <div class="popup_info">
                 <p class="popup_card_name">ПЕЧАТЬ ДЕНЯГ</p>
               </div>
-              <p class="popup_data">
-                Описание карточки здесь...
-              </p>
+              <p class="popup_data">Описание карточки здесь...</p>
             </div>
           </div>
         </div>
@@ -51,19 +48,27 @@
         <span class="carousel-control-prev" onclick="prevCard()">❮</span>
         <span class="carousel-control-next" onclick="nextCard()">❯</span>
       </div>
-
     </div>
 
     <!-- Кнопка для голосования -->
     <div class="text-center mt-4 vote_button_wrapper">
-      <button class="btn btn-primary btn-lg button_vote" onclick="toggleBetForm()">
+      <button
+        class="btn btn-primary btn-lg button_vote"
+        onclick="toggleBetForm()"
+      >
         Проголосовать
       </button>
 
       <form class="input_form" id="bet_form">
         <div class="form_wrapper">
           <p>Сколько вы хотите поставить?</p>
-          <input type="number" name="bet_amount" id="bet_amount" min="1" required>
+          <input
+            type="number"
+            name="bet_amount"
+            id="bet_amount"
+            min="1"
+            required
+          />
           <button type="submit">Подтвердить ставку</button>
         </div>
       </form>
@@ -74,8 +79,8 @@
 <script>
   let currentCardIndex = 0;
   const cards = document.querySelectorAll(".carousel-item");
- const formWrapper = document.querySelector('.form_wrapper');
- const betForm = document.getElementById("bet_form");
+  const formWrapper = document.querySelector(".form_wrapper");
+  const betForm = document.getElementById("bet_form");
   function showCard(index) {
     cards.forEach((card, i) => {
       card.classList.remove("active");
@@ -95,54 +100,62 @@
     showCard(currentCardIndex);
   }
 
- function toggleBetForm() {
+  function toggleBetForm() {
     const betForm = document.getElementById("bet_form");
-        betForm.style.zIndex = betForm.style.visibility === "1" ? "-1" : "1";
-        betForm.style.visibility = betForm.style.visibility === "visible" ? "hidden" : "visible";
-        betForm.style.opacity = betForm.style.opacity === "1" ? "0" : "1";
+    betForm.style.zIndex = betForm.style.visibility === "1" ? "-1" : "1";
+    betForm.style.visibility =
+      betForm.style.visibility === "visible" ? "hidden" : "visible";
+    betForm.style.opacity = betForm.style.opacity === "1" ? "0" : "1";
   }
-    // Закрытие формы при клике вне её области
-    window.addEventListener('click', function(event) {
-        if (betForm.style.visibility === 'visible' && !formWrapper.contains(event.target) && !event.target.classList.contains('button_vote')) {
-            toggleBetForm(); // Закрываем форму при клике вне формы
-        }
-    });
-
-    // Закрытие формы после успешного голосования
-    document.getElementById("bet_form").addEventListener("submit", function (event) {
-        event.preventDefault(); // Предотвращаем стандартное поведение формы
-        voteForCard(); // Вызываем функцию голосования
-    });
-
-  document.getElementById("bet_form").addEventListener("submit", function (event) {
-    event.preventDefault(); // Предотвращаем стандартное поведение формы
-    voteForCard(); // Вызываем функцию голосования
-  });
-
-function voteForCard() {
-  const activeCard = document.querySelector(".carousel-item.active");
-  const cardId = activeCard.getAttribute("data-card-id");
-  const betAmount = document.querySelector("#bet_amount").value;
-
-  if (!betAmount || betAmount <= 0) {
-      alert("Введите корректную сумму для ставки!");
-      return;
-  }
-
-  fetch(`/choose_card/${cardId}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: `bet_amount=${betAmount}&round_id=${roundId}`  // Добавляем round_id в запрос
-  }).then((response) => {
-    if (response.ok) {
-      alert("Вы успешно проголосовали за карточку!");
-    } else {
-      response.text().then(text => alert(text));
+  // Закрытие формы при клике вне её области
+  window.addEventListener("click", function (event) {
+    if (
+      betForm.style.visibility === "visible" &&
+      !formWrapper.contains(event.target) &&
+      !event.target.classList.contains("button_vote")
+    ) {
+      toggleBetForm(); // Закрываем форму при клике вне формы
     }
   });
-}
 
+  // Закрытие формы после успешного голосования
+  document
+    .getElementById("bet_form")
+    .addEventListener("submit", function (event) {
+      event.preventDefault(); // Предотвращаем стандартное поведение формы
+      voteForCard(); // Вызываем функцию голосования
+    });
+
+  document
+    .getElementById("bet_form")
+    .addEventListener("submit", function (event) {
+      event.preventDefault(); // Предотвращаем стандартное поведение формы
+      voteForCard(); // Вызываем функцию голосования
+    });
+
+  function voteForCard() {
+    const activeCard = document.querySelector(".carousel-item.active");
+    const cardId = activeCard.getAttribute("data-card-id");
+    const betAmount = document.querySelector("#bet_amount").value;
+
+    if (!betAmount || betAmount <= 0) {
+      alert("Введите корректную сумму для ставки!");
+      return;
+    }
+
+    fetch(`/choose_card/${cardId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: `bet_amount=${betAmount}&round_id=${roundId}`, // Добавляем round_id в запрос
+    }).then((response) => {
+      if (response.ok) {
+        alert("Вы успешно проголосовали за карточку!");
+      } else {
+        response.text().then((text) => alert(text));
+      }
+    });
+  }
 </script>
 {% endblock %}
