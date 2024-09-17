@@ -1,11 +1,11 @@
-{% extends "base.html" %} {% block title %}Игра{% endblock %} {% block content
-%}
+{% extends "base.html" %}
+{% block title %}Игра{% endblock %}
+{% block content %}
 <div
   class="container game-container d-flex flex-column align-items-start justify-content-center mt-3"
   style="min-height: 80vh"
 >
   <!-- Кнопка "Назад" в левом верхнем углу -->
-  <!-- <a href="{{ url_for('index') }}" class="btn-back">Назад</a> -->
 
   <!-- Выравнивание текста по левой стороне -->
   <div class="text-left mb-3">
@@ -13,88 +13,69 @@
     <p>Цель: {{ round.target }}</p>
   </div>
 
-  <!-- Карусель -->
-  <div class="carousel-wrapper">
-    <div class="carousel-inner">
-      {% for card in cards %}
-      <div
-        class="carousel-item {% if loop.first %}active{% endif %}"
-        data-card-id="{{ card.id }}"
-      >
-        <div class="d-flex justify-content-center">
-          <img
-            src="{{ url_for('static', filename=card.image_path) }}"
-            class="d-block img-fluid card-img"
-            alt="Карточка {{ loop.index }}"
-            style="max-height: 250px"
-          />
+  <!-- Обертка для карусели -->
+  <div class="carousel-wrapper-container">
+        <!-- Форма для ввода ставки (изначально скрыта) -->
+
+    <div class="carousel-wrapper">
+      <div class="carousel-inner">
+        {% for card in cards %}
+        <div
+          class="carousel-item {% if loop.first %}active{% endif %}"
+          data-card-id="{{ card.id }}"
+        >
+          <div class="d-flex justify-content-center">
+            <img
+              src="{{ url_for('static', filename=card.image_url.replace('static/', '')) }}"
+              class="d-block img-fluid card-img"
+              alt="Карточка {{ loop.index }}"
+              style="max-height: 250px"
+            />
+          </div>
+          <div class="card_popup">
+            <div class="popup_body">
+              <div class="popup_info">
+                <p class="popup_card_name">ПЕЧАТЬ ДЕНЯГ</p>
+              </div>
+              <p class="popup_data">
+                Описание карточки здесь...
+              </p>
+            </div>
+          </div>
         </div>
-        <div class="carousel-caption">
-          <h5>{{ card.text }}</h5>
-        </div>
+        {% endfor %}
       </div>
-      {% endfor %}
+
+      <!-- Стрелки для навигации -->
+      <div class="carousel-nav">
+        <span class="carousel-control-prev" onclick="prevCard()">❮</span>
+        <span class="carousel-control-next" onclick="nextCard()">❯</span>
+      </div>
+
     </div>
 
-    <!-- Стрелки для навигации -->
-    <div class="carousel-nav">
-      <span class="carousel-control-prev" onclick="prevCard()">❮</span>
-      <span class="carousel-control-next" onclick="nextCard()">❯</span>
-    </div>
-  </div>
+    <!-- Кнопка для голосования -->
+    <div class="text-center mt-4 vote_button_wrapper">
+      <button class="btn btn-primary btn-lg button_vote" onclick="toggleBetForm()">
+        Проголосовать
+      </button>
 
-  <!-- Кнопка для голосования -->
-  <div class="text-center mt-4 vote_button_wrapper">
-    <button class="btn btn-primary btn-lg button_vote" onclick="voteForCard()">
-      Проголосовать
-    </button>
-  </div>
-  <div class="card_popup">
-    <div class="popup_body">
-      <div class="popup_info">
-        <img src="" alt="" class="popup_button"/>
-        <p class="popup_card_name">ПЕЧАТЬ ДЕНЯГ</p>
-      </div>
-      <p    class="popup_data">
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Deserunt
-        maiores facilis quis eaque vero beatae ratione ut aliquid. Voluptate
-        pariatur enim vero, eos neque nulla, eligendi dolor qui praesentium
-        consequatur ex ab explicabo doloribus ipsam, blanditiis culpa temporibus
-        consequuntur atque! Nulla rerum beatae, doloremque provident velit, eos
-        perspiciatis laboriosam nisi veritatis magni nobis maiores ut eaque
-        blanditiis accusantium assumenda suscipit, quae labore perferendis
-        numquam hic animi dicta culpa! Temporibus aperiam necessitatibus
-        molestiae corrupti perspiciatis rerum, recusandae dolorem dolores
-        consectetur fugit commodi sunt nemo eligendi quos asperiores cumque at
-        ipsam. Sequi sit repellendus eius ab pariatur doloremque similique
-        repudiandae ipsa natus at repellat aut harum optio, accusamus ducimus
-        quisquam esse vel corporis dolor doloribus dolore magni debitis eos!
-        Totam suscipit libero quia perferendis nihil nobis modi tempore
-        necessitatibus accusantium. Fugit minima nesciunt sapiente
-        exercitationem sed velit iste unde temporibus excepturi maxime voluptas
-        enim, recusandae quam ratione reiciendis aut quibusdam, architecto
-        doloremque in sunt animi molestiae corrupti quos eaque! Quibusdam, atque
-        necessitatibus voluptate assumenda expedita minus rem sunt vel maxime
-        fugiat doloribus dolorem, dignissimos dolor consectetur itaque at labore
-        provident tempore architecto consequatur repellat. Aliquid maiores
-        tempore ipsum reprehenderit quasi, ad neque et aliquam facilis fuga
-        deleniti harum officiis quisquam temporibus dolor.
-      </p>
+      <form class="input_form" id="bet_form">
+        <div class="form_wrapper">
+          <p>Сколько вы хотите поставить?</p>
+          <input type="number" name="bet_amount" id="bet_amount" min="1" required>
+          <button type="submit">Подтвердить ставку</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
-<form class="input_form" id="bet_form">
-    <div class="form_wrapper">
-        <p>Сколько вы хотите поставить?</p>
-        <input type="number" name="bet_amount" id="bet_amount" min="1" required>
-        <button type="submit">Подтвердить ставку</button>
-    </div>
-</form>
 
 <script>
   let currentCardIndex = 0;
   const cards = document.querySelectorAll(".carousel-item");
-
+ const formWrapper = document.querySelector('.form_wrapper');
+ const betForm = document.getElementById("bet_form");
   function showCard(index) {
     cards.forEach((card, i) => {
       card.classList.remove("active");
@@ -114,29 +95,54 @@
     showCard(currentCardIndex);
   }
 
-  function voteForCard() {
-    const activeCard = document.querySelector(".carousel-item.active");
-    const cardId = activeCard.getAttribute("data-card-id");
-    const betAmount = document.querySelector("#bet_amount").value;
-
-    fetch(`/choose_card/${cardId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: `bet_amount=${betAmount}`
-    }).then((response) => {
-      if (response.ok) {
-        alert("Вы успешно проголосовали за карточку!");
-      } else {
-        response.text().then(text => alert(text));
-      }
-    });
+ function toggleBetForm() {
+    const betForm = document.getElementById("bet_form");
+        betForm.style.zIndex = betForm.style.visibility === "1" ? "-1" : "1";
+        betForm.style.visibility = betForm.style.visibility === "visible" ? "hidden" : "visible";
+        betForm.style.opacity = betForm.style.opacity === "1" ? "0" : "1";
   }
+    // Закрытие формы при клике вне её области
+    window.addEventListener('click', function(event) {
+        if (betForm.style.visibility === 'visible' && !formWrapper.contains(event.target) && !event.target.classList.contains('button_vote')) {
+            toggleBetForm(); // Закрываем форму при клике вне формы
+        }
+    });
+
+    // Закрытие формы после успешного голосования
+    document.getElementById("bet_form").addEventListener("submit", function (event) {
+        event.preventDefault(); // Предотвращаем стандартное поведение формы
+        voteForCard(); // Вызываем функцию голосования
+    });
 
   document.getElementById("bet_form").addEventListener("submit", function (event) {
     event.preventDefault(); // Предотвращаем стандартное поведение формы
     voteForCard(); // Вызываем функцию голосования
   });
+
+function voteForCard() {
+  const activeCard = document.querySelector(".carousel-item.active");
+  const cardId = activeCard.getAttribute("data-card-id");
+  const betAmount = document.querySelector("#bet_amount").value;
+
+  if (!betAmount || betAmount <= 0) {
+      alert("Введите корректную сумму для ставки!");
+      return;
+  }
+
+  fetch(`/choose_card/${cardId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: `bet_amount=${betAmount}&round_id=${roundId}`  // Добавляем round_id в запрос
+  }).then((response) => {
+    if (response.ok) {
+      alert("Вы успешно проголосовали за карточку!");
+    } else {
+      response.text().then(text => alert(text));
+    }
+  });
+}
+
 </script>
 {% endblock %}

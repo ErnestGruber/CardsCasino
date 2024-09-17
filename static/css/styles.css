@@ -156,10 +156,10 @@ body {
   position: relative;
 }
 
-/* Стили карусели */
+/* Карусель */
 .carousel-wrapper {
   position: relative;
-  max-width: 300px;
+  max-width: 100%; /* Адаптивная ширина */
   margin: 0 auto;
   overflow: hidden;
   display: flex;
@@ -194,17 +194,18 @@ body {
   justify-content: space-between;
   width: 100%;
   position: absolute;
-  top: 50%;
+  top: 50%; /* Располагаем стрелки посередине карусели */
+  left: 0;
   transform: translateY(-50%);
 }
 
 .carousel-control-prev,
 .carousel-control-next {
-  font-size: 1.5rem; /* Уменьшены стрелки */
+  font-size: 1.5rem;
   color: white;
   background: rgba(0, 0, 0, 0.7);
-  width: 30px; /* Уменьшены размеры стрелок */
-  height: 30px;
+  width: 40px;
+  height: 40px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -217,6 +218,25 @@ body {
 .carousel-control-prev:hover,
 .carousel-control-next:hover {
   background-color: rgba(0, 0, 0, 0.9);
+}
+
+/* Дополнительные стили для разрешения 320px */
+@media (max-width: 600px) {
+  .carousel-wrapper {
+    max-width: 100%; /* Полная ширина для маленьких экранов */
+    height: auto;
+  }
+
+  .carousel-inner {
+    flex-direction: row;
+  }
+
+  .carousel-control-prev,
+  .carousel-control-next {
+    width: 30px; /* Уменьшаем размер стрелок для мобильных */
+    height: 30px;
+    font-size: 1.2rem;
+  }
 }
 
 /* Кнопка голосования */
@@ -314,11 +334,11 @@ body {
   right: 0;
   width: 100%;
   height: 100%;
-  z-index: 1;
+  z-index: -1;
   align-items: center;
   justify-content: center;
   color: black;
-  visibility: hidden;
+  /*visibility: hidden;*/
   opacity: 0;
 }
 

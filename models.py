@@ -75,13 +75,15 @@ class Bet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Кто сделал ставку
     card_id = db.Column(db.Integer, db.ForeignKey('card.id'), nullable=False)  # На какую карточку была сделана ставка
+    round_id = db.Column(db.Integer, db.ForeignKey('round.id'), nullable=False)  # Привязка к активному раунду
     bones = db.Column(db.Integer, nullable=False)  # Количество BONES, поставленных на карточку
     placed_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, user_id, card_id, bones):
+    def __init__(self, user_id, card_id, bones, round_id):
         self.user_id = user_id
         self.card_id = card_id
         self.bones = bones
+        self.round_id = round_id
 
 # Модель для управления реферальной системой
 class ReferralBonus(db.Model):
