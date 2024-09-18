@@ -1,23 +1,34 @@
 {% extends 'admin/base.html' %}
 {% block body %}
 <h2>Статистика ставок</h2>
-<p>Всего ставок: {{ total_bets }}</p>
+<p>Всего ставок (BONES и NOT): {{ total_bank }} </p>
 <table class="table">
     <thead>
         <tr>
             <th>Карточка</th>
-            <th>Количество ставок</th>
-            <th>Процент</th>
+            <th>Ставки BONES</th>
+            <th>Ставки NOT</th>
+            <th>Процент от общего банка</th>
         </tr>
     </thead>
     <tbody>
         {% for stat in stats %}
         <tr>
-            <td>{{ stat.card }}</td>
-            <td>{{ stat.count }}</td>
+            <td><img src="{{ stat.image_url }}" alt="Карточка" style="width: 100px;">{{ stat.image_url }}</td>
+            <td>{{ stat.total_bones }} BONES</td>
+            <td>{{ stat.total_not }} NOT</td>
             <td>{{ stat.percentage }}%</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+
+<h3>Подсчет победителей</h3>
+<ul>
+    <li>Общий банк: {{ results.total_bank }} BONES и NOT</li>
+    <li>Комиссия администратору: {{ results.admin_fee }}</li>
+    <li>Карта-победитель: {{ results.winner_card.image_url }}</li>
+    <li>Коэффициент выплат: {{ results.coefficient }}</li>
+</ul>
+
 {% endblock %}

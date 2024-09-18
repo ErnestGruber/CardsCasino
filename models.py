@@ -7,27 +7,31 @@ db = SQLAlchemy()
 class User(db.Model):
     __tablename__ = 'user'
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)  # Поле с автоинкрементом
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     bones = db.Column(db.Integer, default=100)  # Начальные очки BONES
     not_tokens = db.Column(db.Integer, default=0)  # Токены NOT
-    woof_tokens = db.Column(db.Integer, default=0)  # Токены WOOF (для будущего расширения)
     referral_code = db.Column(db.String(100), unique=True)  # Уникальный реферальный код
     referred_by = db.Column(db.String(100), db.ForeignKey('user.referral_code'), nullable=True)  # Реферер
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+    is_admin = db.Column(db.Boolean, default=False)  # Поле, указывающее, является ли пользователь администратором
+    wallet_address = db.Column(db.String(255), default="0xDefaultWallet")  # Адрес кошелька пользователя
 
     # Связь с рефералами
     referrals = db.relationship('User', backref=db.backref('referrer', remote_side=[referral_code]))
     bets = db.relationship('Bet', backref='user', lazy=True)  # Ставки игрока
 
-    def __init__(self, bones, not_tokens, username, referral_code=None, referred_by=None, id=None):
-        self.id = id  # Возможность передавать id вручную
+    def __init__(self, bones, not_tokens, username, referral_code=None, referred_by=None, id=None, is_admin=False,
+                 wallet_address="0xDefaultWallet"):
+        self.id = id
         self.bones = bones
         self.not_tokens = not_tokens
         self.username = username
         self.referral_code = referral_code
         self.referred_by = referred_by
-
+        self.is_admin = is_admin
+        self.wallet_address = wallet_address
 
 # Модель раунда
 class Round(db.Model):
@@ -55,37 +59,31 @@ class Card(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     image_url = db.Column(db.String(255), nullable=False)  # URL изображения карточки
-    text = db.Column(db.String(255), nullable=False)  # Описание карточки
     round_id = db.Column(db.Integer, db.ForeignKey('round.id'), nullable=False)  # Привязка к раунду
-    total_bones = db.Column(db.Integer, default=0)  # Общее количество BONES, поставленных на карточку
-    bets = db.relationship('Bet', backref='card', lazy=True)  # Ставки на карточку
+    total_bones = db.Column(db.Integer, default=0)  # Общее количество BONES
+    total_not = db.Column(db.Integer, default=0)  # Общее количество NOT
+    total_bank = db.Column(db.Integer, default=0)  # Общий банк (BONES + NOT)
+    is_winner = db.Column(db.Boolean, default=False)  # Карточка-победитель
 
-    def __init__(self, image_url, text, round_id):
+    def __init__(self, image_url, round_id):
         self.image_url = image_url
-        self.text = text
         self.round_id = round_id
 
     def __repr__(self):
         return f'<Card {self.text}>'
 
-# Модель ставки
+#  Модель ставок
 class Bet(db.Model):
-    __tablename__ = 'bet'
-
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Кто сделал ставку
     card_id = db.Column(db.Integer, db.ForeignKey('card.id'), nullable=False)  # На какую карточку была сделана ставка
-    round_id = db.Column(db.Integer, db.ForeignKey('round.id'), nullable=False)  # Привязка к активному раунду
-    bones = db.Column(db.Integer, nullable=False)  # Количество BONES, поставленных на карточку
+    round_id = db.Column(db.Integer, db.ForeignKey('round.id'))  # Привязка к активному раунду
+    amount = db.Column(db.Integer, nullable=False)  # Сумма ставки
+    bet_type = db.Column(db.String(10), nullable=False)  # Тип ставки: 'NOT' или 'BONES'
     placed_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, user_id, card_id, bones, round_id):
-        self.user_id = user_id
-        self.card_id = card_id
-        self.bones = bones
-        self.round_id = round_id
 
-# Модель для управления реферальной системой
+# Модель для управления реферальными бонусами
 class ReferralBonus(db.Model):
     __tablename__ = 'referral_bonus'
 

@@ -55,7 +55,7 @@
     </div>
 
     <!-- Кнопка для голосования -->
-    <div class="text-center mt-4 vote_button_wrapper">
+    <div class="text-center mt-4 vote_button_wrapper" >
       <button class="btn btn-primary btn-lg button_vote" onclick="toggleBetForm()">
         Проголосовать
       </button>
@@ -64,6 +64,11 @@
         <div class="form_wrapper">
           <p>Сколько вы хотите поставить?</p>
           <input type="number" name="bet_amount" id="bet_amount" min="1" required>
+                <p>Выберите тип ставки:</p>
+            <select id="bet_type" name="bet_type" required>
+                <option value="bones">BONES</option>
+                <option value="not_tokens">NOT</option>
+                </select>
           <button type="submit">Подтвердить ставку</button>
         </div>
       </form>
@@ -76,6 +81,9 @@
   const cards = document.querySelectorAll(".carousel-item");
  const formWrapper = document.querySelector('.form_wrapper');
  const betForm = document.getElementById("bet_form");
+
+ const roundId = {{ round.id }};
+
   function showCard(index) {
     cards.forEach((card, i) => {
       card.classList.remove("active");
@@ -114,35 +122,31 @@
         voteForCard(); // Вызываем функцию голосования
     });
 
-  document.getElementById("bet_form").addEventListener("submit", function (event) {
-    event.preventDefault(); // Предотвращаем стандартное поведение формы
-    voteForCard(); // Вызываем функцию голосования
-  });
+ function voteForCard() {
+    const activeCard = document.querySelector(".carousel-item.active");
+    const cardId = activeCard.getAttribute("data-card-id");
+    const betAmount = document.querySelector("#bet_amount").value;
+    const betType = document.querySelector("#bet_type").value;
+    const roundId = "{{ round.id }}";
 
-function voteForCard() {
-  const activeCard = document.querySelector(".carousel-item.active");
-  const cardId = activeCard.getAttribute("data-card-id");
-  const betAmount = document.querySelector("#bet_amount").value;
-
-  if (!betAmount || betAmount <= 0) {
-      alert("Введите корректную сумму для ставки!");
-      return;
-  }
-
-  fetch(`/choose_card/${cardId}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: `bet_amount=${betAmount}&round_id=${roundId}`  // Добавляем round_id в запрос
-  }).then((response) => {
-    if (response.ok) {
-      alert("Вы успешно проголосовали за карточку!");
-    } else {
-      response.text().then(text => alert(text));
+    if (!betAmount || betAmount <= 0) {
+        alert("Введите корректную сумму для ставки!");
+        return;
     }
-  });
-}
 
+    fetch(`/choose_card/${cardId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: `bet_amount=${betAmount}&bet_type=${betType}&round_id=${roundId}`
+    }).then((response) => {
+      if (response.ok) {
+        alert("Вы успешно проголосовали за карточку!");
+      } else {
+        response.text().then(text => alert(text));
+      }
+    });
+}
 </script>
 {% endblock %}

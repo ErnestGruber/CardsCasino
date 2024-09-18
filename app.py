@@ -1,7 +1,7 @@
 import logging
 from flask import Flask, redirect, url_for, session, render_template, request
 from config import Config
-from models import db, User, Round, Card, Bet
+from models import db, User, Round, Card, Bet, ReferralBonus
 # Не импортируем setup_admin сразу
 # from admin import setup_admin
 from flask_migrate import Migrate
@@ -22,15 +22,27 @@ def game():
     else:
         return "Нет активного раунда", 404
 
+
 @app.route('/login/<int:user_id>')
 def login(user_id):
     logging.info(f"Попытка входа пользователя с ID: {user_id}")
     user = User.query.filter_by(id=user_id).first()
+
     if user:
         session['user_id'] = user.id
         session['username'] = user.username
+
+        # Проставляем флаг админа, если имя пользователя равно GertyHelher
+        if user.username == 'GertyHelher':
+            user.is_admin = True
+            db.session.commit()
+
         logging.info(f"Пользователь {user.username} вошел в систему.")
-        return render_template('pages/index.html', username=user.username, not_tokens=user.not_tokens, bones=user.bones)
+        return render_template('pages/index.html',
+                               username=user.username,
+                               not_tokens=user.not_tokens,
+                               bones=user.bones,
+                               is_admin=user.is_admin)
     else:
         logging.info(f"Пользователь с ID {user_id} не найден!")
         return "Пользователь не найден!", 404
@@ -39,36 +51,59 @@ def login(user_id):
 
 @app.route('/choose_card/<int:card_id>', methods=['POST'])
 def choose_card(card_id):
+    print(f"Получен запрос на карточку ID: {card_id}")
+    print(f"Пользователь ID: {session.get('user_id')}")
+
     if 'user_id' not in session:
+        print("Ошибка: пользователь не авторизован")
         return "Вы не авторизованы!", 403
 
     user = User.query.get(session['user_id'])
     card = Card.query.get(card_id)
-    round_id = request.form['round_id']  # Получаем идентификатор активного раунда
+    round_id = request.form['round_id']  # Получаем идентификатор раунда
+    bet_type = request.form['bet_type']  # Получаем тип ставки (BONES или NOT)
+    bet_amount = int(request.form['bet_amount'])
+
+    print(f"Ставка: {bet_amount}, Тип ставки: {bet_type}, Раунд: {round_id}")
 
     if not card:
+        print("Ошибка: карточка не найдена")
         return "Карточка не найдена!", 404
-
-    bet_amount = int(request.form['bet_amount'])
 
     # Проверка, есть ли уже ставка на этот раунд
     existing_bet = Bet.query.filter_by(user_id=user.id, card_id=card_id, round_id=round_id).first()
     if existing_bet:
-        return "Вы уже сделали ставку на эту карточку в этом раунде!", 400
+        print("Ошибка: пользователь уже сделал ставку")
+        return "Вы уже сделали ставку на эту карточку!", 400
 
-    # Проверка, хватает ли у пользователя BONES
-    if user.bones < bet_amount:
-        return "У вас недостаточно BONES для этой ставки!", 400
+    # Проверяем выбранный тип ставки и баланс пользователя
+    if bet_type == "bones":
+        if user.bones < bet_amount:
+            print("Ошибка: недостаточно BONES")
+            return "У вас недостаточно BONES для этой ставки!", 400
+        user.bones -= bet_amount
+        card.total_bones += bet_amount  # Увеличиваем количество BONES, поставленных на карточку
+    elif bet_type == "not_tokens":
+        if user.not_tokens < bet_amount:
+            print("Ошибка: недостаточно NOT Tokens")
+            return "У вас недостаточно NOT Tokens для этой ставки!", 400
+        user.not_tokens -= bet_amount
+        card.total_not += bet_amount  # Увеличиваем количество NOT, поставленных на карточку
+    else:
+        print("Ошибка: неверный тип ставки")
+        return "Неверный тип ставки!", 400
 
-    # Обновляем данные пользователя и карточки
-    user.bones -= bet_amount
-    card.total_bones += bet_amount
+    # Обновляем общий банк карточки (BONES + NOT)
+    card.total_bank = card.total_bones + card.total_not
 
-    new_bet = Bet(user_id=user.id, card_id=card_id, bones=bet_amount, round_id=round_id)
+    new_bet = Bet(user_id=user.id, card_id=card_id, amount=bet_amount, round_id=round_id, bet_type=bet_type)
     db.session.add(new_bet)
     db.session.commit()
 
+    print("Ставка успешно сделана")
     return "Вы успешно проголосовали за карточку!", 200
+
+
 
 
 
