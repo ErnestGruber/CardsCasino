@@ -1,17 +1,24 @@
 import logging
 from flask import Flask, redirect, url_for, session, render_template, request
 from config import Config
-from models import db, User, Round, Card, Bet, ReferralBonus
-# Не импортируем setup_admin сразу
-# from admin import setup_admin
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from models import db, Round, Card, User, Bet
+from flask_caching import Cache
+
+
 from flask_migrate import Migrate
+
+from services import process_referral_bonus
+
 app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = Config.SECRET_KEY
 migrate = Migrate(app, db)
+
 # Инициализация базы данных
 db.init_app(app)
-
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 @app.route('/game')
 def game():
     active_round = Round.query.filter_by(is_active=True).first()
@@ -60,8 +67,8 @@ def choose_card(card_id):
 
     user = User.query.get(session['user_id'])
     card = Card.query.get(card_id)
-    round_id = request.form['round_id']  # Получаем идентификатор раунда
-    bet_type = request.form['bet_type']  # Получаем тип ставки (BONES или NOT)
+    round_id = request.form['round_id']
+    bet_type = request.form['bet_type']
     bet_amount = int(request.form['bet_amount'])
 
     print(f"Ставка: {bet_amount}, Тип ставки: {bet_type}, Раунд: {round_id}")
@@ -76,36 +83,34 @@ def choose_card(card_id):
         print("Ошибка: пользователь уже сделал ставку")
         return "Вы уже сделали ставку на эту карточку!", 400
 
-    # Проверяем выбранный тип ставки и баланс пользователя
+    # Проверяем баланс пользователя
     if bet_type == "bones":
         if user.bones < bet_amount:
             print("Ошибка: недостаточно BONES")
             return "У вас недостаточно BONES для этой ставки!", 400
         user.bones -= bet_amount
-        card.total_bones += bet_amount  # Увеличиваем количество BONES, поставленных на карточку
     elif bet_type == "not_tokens":
         if user.not_tokens < bet_amount:
             print("Ошибка: недостаточно NOT Tokens")
             return "У вас недостаточно NOT Tokens для этой ставки!", 400
         user.not_tokens -= bet_amount
-        card.total_not += bet_amount  # Увеличиваем количество NOT, поставленных на карточку
     else:
         print("Ошибка: неверный тип ставки")
         return "Неверный тип ставки!", 400
 
-    # Обновляем общий банк карточки (BONES + NOT)
-    card.total_bank = card.total_bones + card.total_not
-
+    # Создаем новую ставку
     new_bet = Bet(user_id=user.id, card_id=card_id, amount=bet_amount, round_id=round_id, bet_type=bet_type)
     db.session.add(new_bet)
+
+    # Начисляем бонусы пригласившему пользователя (рефереру)
+    referrer = user.referrer
+    if referrer:
+        process_referral_bonus(user, referrer, bet_amount, bet_type)
+
     db.session.commit()
 
     print("Ставка успешно сделана")
     return "Вы успешно проголосовали за карточку!", 200
-
-
-
-
 
 # После того, как приложение создано и инициализировано, импортируем setup_admin
 from admin import setup_admin
@@ -119,3 +124,4 @@ if __name__ == '__main__':
         db.create_all()  # Создаем таблицы при запуске приложения
     print("Запуск Flask-приложения...")
     app.run(host='127.0.0.1', port=5000, debug=True)
+

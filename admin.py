@@ -1,12 +1,11 @@
-import statistics
-
 from flask_admin import Admin, BaseView, expose
-from flask_admin.contrib.sqla import ModelView
-from flask import render_template, request, session
+from flask import request
 from werkzeug.utils import secure_filename
-from models import Round, Card, Bet, db
+from models import Round, Card, Bet, db, User, RoundStats
 import os
 from datetime import datetime
+
+from services import calculate_winner_and_stats
 
 # Инициализация админ-панели
 admin = Admin()
@@ -89,77 +88,7 @@ class BetStatsView(BaseView):
         results = calculate_winner_and_stats(active_round.id)
         return self.render('admin/bets_stats.html', stats=stats, total_bank=total_bank, results=results)
 
-def calculate_winner_and_stats(round_id, comparison_type="max"):
-    """
-    Расчет победителя и статистики для активного раунда.
-    comparison_type: "min", "max", или "avg" для сравнения по минимальной, максимальной или средней ставке.
-    """
-    # Получаем все карточки активного раунда
-    cards = Card.query.filter_by(round_id=round_id).all()
-
-    if not cards:
-        return {"error": "Карточки не найдены для данного раунда"}
-
-    # Вычисляем общие суммы BONES и NOT для всего раунда
-    total_bones = sum(card.total_bones for card in cards)
-    total_not = sum(card.total_not for card in cards)
-    total_bank = sum(card.total_bank for card in cards)  # Используем поле total_bank для всех карточек
-
-    # Комиссия администратору 15%
-    admin_fee = total_bank * 0.15
-    bank_after_fee = total_bank - admin_fee
-
-    # В зависимости от типа сравнения (min, max, avg) находим победителя
-    if comparison_type == "min":
-        min_bet = min(card.total_bank for card in cards)
-        winner_card = next(card for card in cards if card.total_bank == min_bet)
-    elif comparison_type == "avg":
-        avg_bet = statistics.mean(card.total_bank for card in cards)
-        # Найдем карту, которая ближе всего к средней ставке
-        winner_card = min(cards, key=lambda card: abs(card.total_bank - avg_bet))
-    else:  # По умолчанию используем "max"
-        winner_card = max(cards, key=lambda card: card.total_bank)
-
-    # Если у победителя есть BONES и NOT
-    if winner_card:
-        winning_bones = winner_card.total_bones
-        winning_not = winner_card.total_not
-        wining_coef = bank_after_fee/(winning_bones+winning_not)
-
-
-        return {
-            "total_bones": total_bones,
-            "total_not": total_not,
-            "total_bank": total_bank,
-            "admin_fee": admin_fee,
-            "winner_card": winner_card,
-            "coefficient": wining_coef,
-            "comparison_type": comparison_type
-        }
-    else:
-        return {"error": "Победитель не найден"}
-
-class RoundResult(BaseView):
-    @expose('/')
-    def index(self):
-        return "Round results page"
-    @expose('/round_results/<int:round_id>', methods=['GET'])
-    def show_round_results(round_id):
-        if not session.get('is_admin', False):
-            return "Доступ запрещен", 403
-
-        # Вызов функции для расчета результатов
-        results = calculate_winner_and_stats(round_id)
-
-        if "error" in results:
-            return results["error"], 400
-
-        # Возвращаем страницу с результатами
-        return render_template('admin/round_results.html', results=results)
-
-
 def setup_admin(app):
     admin.init_app(app)
     admin.add_view(RoundAdminView(name="Создать раунд"))
     admin.add_view(BetStatsView(name="Статистика ставок"))
-    admin.add_view(RoundResult(name="Статистика ставок"))
