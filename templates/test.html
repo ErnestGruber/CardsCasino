@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход в систему</title>
+</head>
+<body>
+    <h1>Добро пожаловать!</h1>
+    <div id="output"></div>
+
+    <script>
+        // Получаем токен из URL или из локального хранилища
+        const token = new URLSearchParams(window.location.search).get('token') || localStorage.getItem('token');
+
+        if (!token) {
+            document.getElementById('output').innerHTML = "Ошибка: токен не найден. Невозможно продолжить.";
+        } else {
+            // Сохраняем токен в локальном хранилище
+            localStorage.setItem('token', token);
+
+            // Автоматический вход с использованием токена
+            async function login() {
+                try {
+                    const response = await fetch(`/api/login/${token}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        document.getElementById('output').innerHTML = "Вход выполнен успешно!";
+                        // Сразу получаем информацию о пользователе после успешного входа
+                        await getUserInfo();
+                        // Получаем информацию о рефералах
+                        await getReferralStats();
+                    } else {
+                        document.getElementById('output').innerHTML = `Ошибка при входе: ${result.error}`;
+                    }
+                } catch (error) {
+                    document.getElementById('output').innerHTML = `Ошибка сети: ${error.message}`;
+                }
+            }
+
+            // Получаем информацию о пользователе
+            async function getUserInfo() {
+                try {
+                    const response = await fetch(`/api/user/info`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        // Форматируем и выводим информацию о пользователе
+                        document.getElementById('output').innerHTML += `<br><br><b>Информация о пользователе:</b><br>
+                        <ul>
+                            <li><b>Имя пользователя:</b> ${result.username}</li>
+                            <li><b>BONES:</b> ${result.bones}</li>
+                            <li><b>NOT токены:</b> ${result.not_tokens}</li>
+                            <li><b>Админ:</b> ${result.is_admin ? 'Да' : 'Нет'}</li>
+                        </ul>`;
+                    } else {
+                        document.getElementById('output').innerHTML += `<br>Ошибка получения данных пользователя: ${result.error}`;
+                    }
+                } catch (error) {
+                    document.getElementById('output').innerHTML += `<br>Ошибка сети: ${error.message}`;
+                }
+            }
+
+            // Получаем информацию о рефералах
+            async function getReferralStats() {
+                try {
+                    const response = await fetch(`/api/referrals`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        // Форматируем и выводим информацию о рефералах
+                        let referralsHtml = `<b>Статистика рефералов:</b><br><ul>`;
+                        result.referrals.forEach(referral => {
+                            referralsHtml += `
+                            <li>
+                                <b>ID реферала:</b> ${referral.id},
+                                <b>Имя реферала:</b> ${referral.username},
+                                <b>Сумма, принесенная с выигранных ставок:</b> ${referral.total_bonuses}
+                            </li>`;
+                        });
+                        referralsHtml += `</ul>`;
+
+                        document.getElementById('output').innerHTML += referralsHtml;
+                    } else {
+                        document.getElementById('output').innerHTML += `<br>Ошибка получения статистики рефералов: ${result.error}`;
+                    }
+                } catch (error) {
+                    document.getElementById('output').innerHTML += `<br>Ошибка сети: ${error.message}`;
+                }
+            }
+
+            // Выполняем функции после загрузки страницы
+            login();
+        }
+    </script>
+</body>
+</html>

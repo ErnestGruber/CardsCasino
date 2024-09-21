@@ -1,4 +1,4 @@
-from models import User, db, RoundStats, Card, Bet
+# from models import User, db, RoundStats, Card, Bet
 
 # подсчет сатистики и запись в базу данных
 def calculate_winner_and_stats(round_id):
@@ -50,6 +50,9 @@ def calculate_winner_and_stats(round_id):
         }
     else:
         return {"error": "Нет победителя в этом раунде"}
+
+
+
 # подсчет наград из таблицы (раунд должен быть завершен - добавить в конце)
 def distribute_rewards(round_id):
     # Получаем статистику раунда
@@ -105,25 +108,24 @@ def distribute_rewards(round_id):
 
     return "Награды успешно распределены!"
 
-# Обновление функции для распределения бонусов
+# Функция распределения бонусов
 def process_referral_bonus(user, referrer, bet_amount, bet_type):
     admin_bonus = bet_amount * 0.10  # 10% админу
-    referrer_bonus = bet_amount * 0.05  # 5% пригласившему
+    referrer_bonus = bet_amount * 0.05  # 5% пригласившему в BONES
+    admin = User.query.filter_by(is_admin=True).first()
 
     if bet_type == "not_tokens":
-        referrer.bonus_not_tokens += referrer_bonus  # Бонус в NOT для реферера
-        print(f"Начислено {referrer_bonus} бонусных NOT токенов пользователю {referrer.username} за ставку реферала {user.username}")
+        # Администратор получает бонус в NOT токенах
+        if admin:
+            admin.not_tokens += admin_bonus  # Администратору начисляются 10% в NOT
+            print(f"Админу начислено {admin_bonus} NOT токенов")
     else:
-        referrer.bones += referrer_bonus  # Бонус в BONES
+        # Если ставка в BONES, реферер получает бонус в BONES
+        referrer.bones += referrer_bonus  # Бонус в BONES для реферера
         print(f"Начислено {referrer_bonus} бонусных BONES пользователю {referrer.username} за ставку реферала {user.username}")
 
-    # Администратор получает 10% от суммы
-    admin = User.query.filter_by(is_admin=True).first()
+    # Сохраняем изменения в базе данных
     if admin:
-        admin.not_tokens += admin_bonus  # Администратору начисляются 10% в NOT
-        print(f"Админу начислено {admin_bonus} NOT токенов")
-
-    db.session.add(admin)
+        db.session.add(admin)
     db.session.add(referrer)
     db.session.commit()
-

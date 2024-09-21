@@ -6,16 +6,19 @@ import os
 from datetime import datetime
 
 from services import calculate_winner_and_stats
+from services.admin import admin_auth_required
 
 # Инициализация админ-панели
 admin = Admin()
 
 class RoundAdminView(BaseView):
     @expose('/')
+    @admin_auth_required  # Используем декоратор для защиты админки
     def index(self):
         return self.render('admin/round_form.html')  # Используем шаблон для создания раунда
 
     @expose('/create-round', methods=['GET', 'POST'])
+    @admin_auth_required  # Защита создания раунда
     def create_round(self):
         if request.method == 'POST':
             description = request.form['description']
@@ -64,6 +67,7 @@ class RoundAdminView(BaseView):
 
 class BetStatsView(BaseView):
     @expose('/')
+    @admin_auth_required  # Защита статистики ставок
     def bets_stats(self):
         active_round = Round.query.filter_by(is_active=True).first()
         if not active_round:
@@ -88,7 +92,9 @@ class BetStatsView(BaseView):
         results = calculate_winner_and_stats(active_round.id)
         return self.render('admin/bets_stats.html', stats=stats, total_bank=total_bank, results=results)
 
+# Функция для инициализации админки
 def setup_admin(app):
-    admin.init_app(app)
+    from flask_admin import Admin
+    admin = Admin(app, name="Админка", template_mode="bootstrap3")
     admin.add_view(RoundAdminView(name="Создать раунд"))
     admin.add_view(BetStatsView(name="Статистика ставок"))

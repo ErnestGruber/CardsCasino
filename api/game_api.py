@@ -1,11 +1,14 @@
-# api/game_api.py
 from quart import Blueprint, jsonify, request, session
-from models import Round, Card, Bet, db, User
+# from models import Round, Card, Bet, db, User
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from services import process_referral_bonus
+
 game_api = Blueprint('game_api', __name__)
 
+
+# получение активного раунда и карт для фронта
 @game_api.route('/api/game', methods=['GET'])
 async def get_game():
     async with AsyncSession(db.engine) as async_session:
@@ -15,10 +18,13 @@ async def get_game():
         if active_round:
             cards = await async_session.execute(select(Card).filter_by(round_id=active_round.id))
             cards = cards.scalars().all()
-            cards_data = [{'id': card.id, 'image_url': card.image_url, 'total_bones': card.total_bones, 'total_not': card.total_not} for card in cards]
-            return jsonify({'round': {'id': active_round.id, 'description': active_round.description}, 'cards': cards_data})
+            cards_data = [{'id': card.id, 'image_url': card.image_url, 'total_bones': card.total_bones,
+                           'total_not': card.total_not} for card in cards]
+            return jsonify(
+                {'round': {'id': active_round.id, 'description': active_round.description}, 'cards': cards_data})
         else:
             return jsonify({'error': 'No active round found'}), 404
+
 
 @game_api.route('/api/choose_card/<int:card_id>', methods=['POST'])
 async def choose_card(card_id):
@@ -52,6 +58,11 @@ async def choose_card(card_id):
             user.not_tokens -= bet_amount
             card.total_not += bet_amount
 
+        if user.referred_by:
+            referrer = User.query.filter_by(referral_code=user.referred_by).first()
+            if referrer:
+                process_referral_bonus(user, referrer, bet_amount, bet_type)
+
         card.total_bank = card.total_bones + card.total_not
 
         new_bet = Bet(user_id=user.id, card_id=card_id, amount=bet_amount, round_id=round_id, bet_type=bet_type)
@@ -59,6 +70,7 @@ async def choose_card(card_id):
         await async_session.commit()
 
         return jsonify({'success': 'Bet placed successfully'}), 200
+
 
 async def get_bet(round_id: int, user_id: int, session: AsyncSession):
     result = await session.execute(select(Bet).filter_by(round_id=round_id, user_id=user_id))
