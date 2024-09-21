@@ -1,9 +1,7 @@
 import logging
-from flask import Flask, redirect, url_for, session, render_template, request
+from flask import Flask, session, render_template, request
 from config import Config
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from models import db, Round, Card, User, Bet
+from models import db, Round, Card, User, Bet, Token
 from flask_caching import Cache
 
 
@@ -30,31 +28,52 @@ def game():
         return "Нет активного раунда", 404
 
 
-@app.route('/login/<int:user_id>')
-def login(user_id):
-    logging.info(f"Попытка входа пользователя с ID: {user_id}")
-    user = User.query.filter_by(id=user_id).first()
+@app.route('/login/<string:token_value>', methods=['GET', 'POST'])
+def login(token_value):
+    logging.info(f"Попытка входа с токеном: {token_value}")
 
-    if user:
-        session['user_id'] = user.id
-        session['username'] = user.username
+    # Проверяем, существует ли токен и не истек ли его срок действия
+    token = Token.query.filter_by(token=token_value).first()
+    if not token or not token.is_valid():
+        return "Неверный или просроченный токен", 403
 
-        # Проставляем флаг админа, если имя пользователя равно GertyHelher
-        if user.username == 'GertyHelher':
-            user.is_admin = True
-            db.session.commit()
+    user = User.query.filter_by(id=token.user_id).first()
+    if not user:
+        logging.error(f"Пользователь с ID {token.user_id} не найден!")
+        return "Пользователь не найден!", 404
 
-        logging.info(f"Пользователь {user.username} вошел в систему.")
+    session['user_id'] = user.id
+    session['username'] = user.username
+
+    # Если это GET-запрос, просто рендерим страницу
+    if request.method == 'GET':
         return render_template('pages/index.html',
                                username=user.username,
                                not_tokens=user.not_tokens,
                                bones=user.bones,
                                is_admin=user.is_admin)
-    else:
-        logging.info(f"Пользователь с ID {user_id} не найден!")
-        return "Пользователь не найден!", 404
 
-# app.py
+    session['user_id'] = user.id
+    session['username'] = user.username
+    logging.info(f"Пользователь {user.username} вошел в систему.")
+
+    # Если это POST-запрос, проверяем реферальный код
+    if request.method == 'POST':
+        referral_code = request.form.get('referral_code')
+        if referral_code and not user.referred_by:
+            referrer = User.query.filter_by(referral_code=referral_code).first()
+            if referrer and referrer.id != user.id:
+                user.referred_by = referrer.referral_code
+                db.session.commit()
+                # Добавляем бонусы рефереру
+                process_referral_bonus(user, referrer)
+                return "Реферальный код принят!"
+            else:
+                return "Неверный реферальный код или вы не можете использовать свой собственный код."
+
+    return "Ошибка при обработке запроса.", 400
+
+
 
 @app.route('/choose_card/<int:card_id>', methods=['POST'])
 def choose_card(card_id):

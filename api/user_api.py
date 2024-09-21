@@ -1,3 +1,5 @@
+import secrets
+
 from quart import Blueprint, jsonify, session
 from sqlalchemy import select
 
@@ -24,3 +26,13 @@ async def login(token):
             }), 200
         else:
             return jsonify({'error': 'User not found'}), 404
+
+def generate_referral_code():
+    return secrets.token_hex(5)
+# Создаем уникальный токен для пользователя при регистрации
+def generate_permanent_token():
+    return secrets.token_urlsafe(16)
+def generate_referral_link(user):
+    referral_code = user.referral_code
+    referral_link = f"https://t.me/YourTelegramBot?start={referral_code}"
+    return referral_link

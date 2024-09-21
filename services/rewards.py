@@ -1,6 +1,6 @@
 from models import User, db, RoundStats, Card, Bet
 
-
+# подсчет сатистики и запись в базу данных
 def calculate_winner_and_stats(round_id):
     # Получаем все карточки активного раунда
     cards = Card.query.filter_by(round_id=round_id).all()
@@ -105,8 +105,8 @@ def distribute_rewards(round_id):
 
     return "Награды успешно распределены!"
 
+# Обновление функции для распределения бонусов
 def process_referral_bonus(user, referrer, bet_amount, bet_type):
-    # Рассчитываем бонусы
     admin_bonus = bet_amount * 0.10  # 10% админу
     referrer_bonus = bet_amount * 0.05  # 5% пригласившему
 
@@ -117,13 +117,13 @@ def process_referral_bonus(user, referrer, bet_amount, bet_type):
         referrer.bones += referrer_bonus  # Бонус в BONES
         print(f"Начислено {referrer_bonus} бонусных BONES пользователю {referrer.username} за ставку реферала {user.username}")
 
-    # Обновляем администратора
+    # Администратор получает 10% от суммы
     admin = User.query.filter_by(is_admin=True).first()
     if admin:
         admin.not_tokens += admin_bonus  # Администратору начисляются 10% в NOT
         print(f"Админу начислено {admin_bonus} NOT токенов")
 
-    # Сохраняем изменения
     db.session.add(admin)
     db.session.add(referrer)
+    db.session.commit()
 
