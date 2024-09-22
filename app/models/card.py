@@ -1,16 +1,28 @@
-from . import db
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
 
-class Card(db.Model):
+from app.models import Base
+
+
+class Card(Base):
     __tablename__ = 'card'
 
-    id = db.Column(db.Integer, primary_key=True)
-    image_url = db.Column(db.String(255), nullable=False)
-    round_id = db.Column(db.Integer, db.ForeignKey('round.id'), nullable=False)
-    total_bones = db.Column(db.Integer, default=0)
-    total_not = db.Column(db.Integer, default=0)
-    total_bank = db.Column(db.Integer, default=0)
-    is_winner = db.Column(db.Boolean, default=False)
+    id = Column(Integer, primary_key=True)
+    image_url = Column(String(255), nullable=False)
+    round_id = Column(Integer, ForeignKey('round.id'), nullable=False)
+    total_bones = Column(Integer, default=0)
+    total_not = Column(Integer, default=0)
+    total_bank = Column(Integer, default=0)
+    is_winner = Column(Boolean, default=False)
 
-    def __init__(self, image_url, round_id):
+    # Связь с таблицей Round
+    round = relationship('Round', backref='cards', lazy='selectin')
+
+    def __init__(self, image_url, round_id, **kw: Any):
+        super().__init__()
         self.image_url = image_url
         self.round_id = round_id
+
+    def __repr__(self):
+        return f'<Card {self.id} Round {self.round_id}>'
