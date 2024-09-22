@@ -2,6 +2,7 @@ from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.card import Card
 
+
 class CardService:
     def __init__(self, session: AsyncSession):
         self.session = session

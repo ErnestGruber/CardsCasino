@@ -1,108 +1,86 @@
 import logging
 import secrets
 
-from quart import Blueprint, jsonify, session
-from sqlalchemy import select
-from flask import jsonify, request
+from fastapi import APIRouter, Request, Depends, HTTPException
+from pydantic import BaseModel, Field
 
-from app.models import User, db,ReferralStats
+from app.db.session import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.services import UserService, ReferralStatsService
+from app.utils.users import register_user, get_ip, get_token_from_header
 
-from app.utils.users import register_user, get_ip
+user_api = APIRouter()
 
-user_api = Blueprint('user_api', __name__)
+class LoginRequest(BaseModel):
+    id: int = Field(..., description="ID пользователя")
+    token: str = Field(..., description="Токен пользователя")
+    referral_code: str = Field(None, description="Реферальный код")  #
 
-@user_api.route('/api/login/<string:token_value>', methods=['POST'])
-async def api_login(token_value):
-    logging.info(f"Попытка входа с токеном: {token_value}")
+# POST запрос для логина
+@user_api.post('/api/login')
+async def api_login(
+        login_data: LoginRequest,
+        db: AsyncSession = Depends(get_db)
+):
+    logging.info("Запрос получен", login_data)
 
-    async with AsyncSession(db.engine) as async_session:
-        # Проверяем, существует ли пользователь с данным токеном
-        result = await async_session.execute(select(User).filter_by(token=token_value))
-        user = result.scalars().first()
+    user_service = UserService(db)
 
-        # Если пользователя нет, регистрируем его
-        if not user:
-            username = request.json.get('username')
-            user_id = request.json.get('user_id')
-            referral_code = request.json.get('referral_code')
-            client_ip = await get_ip(request)  # Получаем IP пользователя
+    # Проверяем наличие пользователя по токену
+    user = await user_service.get_user_by_token(login_data.token)
 
-            # Вызываем асинхронную функцию регистрации
-            user = await register_user(async_session, username, user_id, client_ip, referral_code)
+    if not user or user.id != login_data.id:
+        raise HTTPException(status_code=404, detail="User not found or incorrect ID")
 
-            if not user:
-                return jsonify({'error': 'Ошибка регистрации пользователя'}), 500
+    # Если передан реферальный код, обрабатываем его
+    if login_data.referral_code and not user.referred_by:
+        referrer = await user_service.get_user_by_referral_code(login_data.referral_code)
+        if referrer and referrer.id != user.id:
+            user.referred_by = referrer.referral_code
+            await db.commit()
 
-        # Сохраняем информацию о пользователе в сессии
-        session['user_id'] = user.id
-        session['username'] = user.username
+    return {
+        'username': user.username,
+        'not_tokens': user.not_tokens,
+        'bones': user.bones,
+        'is_admin': user.is_admin
+    }
 
-        logging.info(f"Пользователь {user.username} успешно вошел в систему.")
+# Получение реферальной статистики
+@user_api.get('/api/referrals')
+async def get_referral_stats(
+    db: AsyncSession = Depends(get_db),
+    token_value: str = Depends(get_token_from_header)
+):
+    user_service = UserService(db)
+    referral_stats_service = ReferralStatsService(db)
 
-        # Обработка реферального кода, если он передан (для существующих пользователей)
-        referral_code = request.json.get('referral_code')
-        if referral_code and not user.referred_by:
-            referrer = await async_session.execute(select(User).filter_by(referral_code=referral_code))
-            referrer = referrer.scalars().first()
+    # Получаем пользователя по токену
+    user = await user_service.get_user_by_token(token_value)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
-            if referrer and referrer.id != user.id:
-                user.referred_by = referrer.referral_code
-                await async_session.commit()
+    # Получаем рефералов пользователя
+    referrals = await user_service.get_users_referred_by(user.referral_code)
+    referral_stats = []
+    total_brought_in = 0
 
-        return jsonify({
-            'username': user.username,
-            'not_tokens': user.not_tokens,
-            'bones': user.bones,
-            'is_admin': user.is_admin
-        }), 200
+    # Для каждого реферала собираем данные о реферальных бонусах
+    for referral in referrals:
+        stats = await referral_stats_service.get_stats_by_referrer(user.id)
+        total_for_referral = sum(stat.referrer_bonus for stat in stats)
+        total_brought_in += total_for_referral
 
+        referral_stats.append({
+            'referral_id': referral.id,
+            'referral_username': referral.username,
+            'brought_in_bonus': total_for_referral
+        })
 
-@user_api.route('/api/referrals', methods=['GET'])
-async def get_referral_stats():
-    # Получаем токен из заголовка
-    token_value = request.headers.get('Authorization')
-
-    if not token_value:
-        return jsonify({'error': 'Токен не предоставлен'}), 401
-
-    # Удаляем "Bearer " из значения заголовка, если используется формат "Bearer <token>"
-    if token_value.startswith('Bearer '):
-        token_value = token_value.split(' ')[1]
-
-    # Ищем пользователя по токену
-    async with AsyncSession(db.engine) as async_session:
-        result = await async_session.execute(select(User).filter_by(token=token_value))
-        user = result.scalars().first()
-
-        if not user:
-            return jsonify({'error': 'Пользователь не найден'}), 404
-
-        # Ищем всех рефералов пользователя
-        referrals_query = await async_session.execute(select(User).filter_by(referred_by=user.referral_code))
-        referrals = referrals_query.scalars().all()
-
-        referral_stats = []
-        total_brought_in = 0
-
-        # Для каждого реферала собираем информацию о ставках и принесенных бонусах
-        for referral in referrals:
-            stats_query = await async_session.execute(select(ReferralStats).filter_by(referrer_id=user.id, referral_id=referral.id))
-            stats = stats_query.scalars().all()
-
-            total_for_referral = sum(stat.referrer_bonus for stat in stats)
-            total_brought_in += total_for_referral
-
-            referral_stats.append({
-                'referral_id': referral.id,
-                'referral_username': referral.username,
-                'brought_in_bonus': total_for_referral
-            })
-
-        return jsonify({
-            'total_brought_in': total_brought_in,
-            'referrals': referral_stats
-        }), 200
+    return {
+        'total_brought_in': total_brought_in,
+        'referrals': referral_stats
+    }
 
 def generate_referral_code():
     return secrets.token_hex(5)

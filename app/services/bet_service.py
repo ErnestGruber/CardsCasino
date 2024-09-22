@@ -2,6 +2,7 @@ from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.bet import Bet
 
+
 class BetService:
     def __init__(self, session: AsyncSession):
         self.session = session

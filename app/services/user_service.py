@@ -30,6 +30,15 @@ class UserService:
         result = await self.session.execute(select(User).filter_by(username=username))
         return result.scalars().first()
 
+    # Получение пользователей, приглашенных по данному реферальному коду
+    async def get_users_referred_by(self, referral_code: str):
+        result = await self.session.execute(select(User).filter_by(referred_by=referral_code))
+        return result.scalars().all()
+
+    async def get_user_by_token(self, token: str):
+        result = await self.session.execute(select(User).filter_by(token=token))
+        return result.scalars().first()
+
     async def get_user_by_referral_code(self, referral_code: str):
         result = await self.session.execute(select(User).filter_by(referral_code=referral_code))
         return result.scalars().first()

@@ -19,7 +19,7 @@ class Card(Base):
     # Связь с таблицей Round
     round = relationship('Round', backref='cards', lazy='selectin')
 
-    def __init__(self, image_url, round_id, **kw: Any):
+    def __init__(self, image_url, round_id):
         super().__init__()
         self.image_url = image_url
         self.round_id = round_id

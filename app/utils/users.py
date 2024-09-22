@@ -1,6 +1,8 @@
 # Асинхронная функция для получения информации о ставке
+import logging
 import secrets
 
+from fastapi import Header, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -65,3 +67,14 @@ async def register_user(async_session, username, user_id, client_ip, referral_co
         await async_session.rollback()
         logging.error(f"Ошибка при регистрации пользователя: {e}")
         return None
+
+async def get_token_from_header(authorization: str = Header(None)):
+    if authorization is None:
+        raise HTTPException(status_code=403, detail="Authorization header is missing")
+
+    # Ожидаем, что токен передан в формате "Bearer <token>"
+    token_parts = authorization.split()
+    if len(token_parts) != 2 or token_parts[0].lower() != "bearer":
+        raise HTTPException(status_code=403, detail="Invalid token format")
+
+    return token_parts[1]  # Возвращаем

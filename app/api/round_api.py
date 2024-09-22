@@ -1,8 +1,8 @@
-# api/round_api.py
+
 from quart import Blueprint, jsonify, request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import db, Card
+from app.models import  Card
 from app.models.round import Round
 
 round_api = Blueprint('round_api', __name__)

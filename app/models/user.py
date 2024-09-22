@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 
-from . import db, Base
+from . import Base
 
 
 class User(Base):
@@ -17,7 +17,7 @@ class User(Base):
     referral_code = Column(String(100), unique=True)  # Уникальный реферальный код
     referred_by = Column(String(100), ForeignKey('user.referral_code'), nullable=True)  # Реферал
     created_at = Column(DateTime, default=datetime.datetime.utcnow)  # Дата регистрации
-    token = Column(String(32), unique=True, nullable=False)  # Токен
+    token = Column(String(60), unique=True, nullable=False)  # Токен
     is_admin = Column(Boolean, default=False)  # Администратор или нет
     wallet_address = Column(String(255), default="0xDefaultWallet")  # Адрес кошелька
     ip_address = Column(String(45), nullable=True)
