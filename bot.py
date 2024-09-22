@@ -24,50 +24,60 @@ async def send_welcome(message: types.Message):
     username = message.from_user.username
     user_id = message.from_user.id
 
-    args = message.get_args()  # Получаем аргументы, например, ?start=refwin
+    args = message.get_args()  # Получаем реферальный код, если он передан
 
     with app.app_context():
         try:
             # Проверяем, существует ли пользователь
             user = User.query.filter_by(username=username).first()
 
-            # Если пользователь не существует, регистрируем нового
-            if not user:
-                referral_code = secrets.token_hex(5)
-                referred_by_user = None
+            # Если пользователь существует, просто отправляем ему ссылку с его токеном
+            if user:
+                logging.info(f"Пользователь {user.username} уже существует. Отправляем ссылку для входа.")
+                web_app_url = f"https://yourdomain.com/login/{user.token}"  # Используем постоянный токен
 
-                # Проверяем наличие аргументов для реферального кода
-                if args and args.startswith("ref"):
-                    referrer_code = args.split("=")[1]  # Получаем реферальный код
-                    referred_by_user = User.query.filter_by(referral_code=referrer_code).first()
+                web_app_button = KeyboardButton(text="Открыть игру", web_app=WebAppInfo(url=web_app_url))
+                keyboard = ReplyKeyboardMarkup(keyboard=[[web_app_button]], resize_keyboard=True)
 
-                    # Проверяем, что пользователь не может быть своим же рефералом
-                    if referred_by_user and referred_by_user.username == username:
-                        await message.reply("Вы не можете использовать свой собственный реферальный код!")
-                        return
+                # Отправляем ссылку пользователю
+                await message.answer("Вы уже зарегистрированы. Нажмите кнопку ниже, чтобы открыть веб-приложение:", reply_markup=keyboard)
+                return
 
-                # Генерируем постоянный токен и создаем нового пользователя
-                permanent_token = generate_permanent_token()
-                new_user = User(
-                    id=user_id,
-                    username=username,
-                    bones=100,
-                    not_tokens=10,
-                    referral_code=referral_code,
-                    referred_by=referred_by_user.referral_code if referred_by_user else None,
-                    token=permanent_token  # Уникальный токен для постоянного доступа
-                )
-                db.session.add(new_user)
-                db.session.commit()
-                user = new_user
+            # Если пользователя нет, регистрируем нового пользователя
+            referral_code = secrets.token_hex(5)
+            referred_by_user = None
 
-                # Если есть реферер, отправляем уведомление рефереру
-                if referred_by_user:
-                    logging.info(f"Новый пользователь {username} зарегистрировался через реферала {referred_by_user.username}.")
-                    await message.bot.send_message(referred_by_user.id, f"Ваш реферал {username} зарегистрировался в системе!")
+            # Проверяем наличие аргументов для реферального кода
+            if args and args.startswith("ref"):
+                referrer_code = args.split("=")[1]  # Получаем реферальный код
+                referred_by_user = User.query.filter_by(referral_code=referrer_code).first()
+
+                # Проверяем, что пользователь не может быть своим же рефералом
+                if referred_by_user and referred_by_user.username == username:
+                    await message.reply("Вы не можете использовать свой собственный реферальный код!")
+                    return
+
+            # Генерируем постоянный токен и создаем нового пользователя
+            permanent_token = generate_permanent_token()
+            new_user = User(
+                id=user_id,
+                username=username,
+                bones=100,
+                not_tokens=0,
+                referral_code=referral_code,
+                referred_by=referred_by_user.referral_code if referred_by_user else None,
+                token=permanent_token  # Уникальный токен для постоянного доступа
+            )
+            db.session.add(new_user)
+            db.session.commit()
+
+            # Если есть реферер, отправляем уведомление рефереру
+            if referred_by_user:
+                logging.info(f"Новый пользователь {username} зарегистрировался через реферала {referred_by_user.username}.")
+                await message.bot.send_message(referred_by_user.id, f"Ваш реферал {username} зарегистрировался в системе!")
 
             # Генерируем ссылку с постоянным токеном для входа через веб-приложение
-            web_app_url = f"https://yourdomain.com/login/{user.token}"  # Ссылка с постоянным токеном
+            web_app_url = f"https://yourdomain.com/login/{new_user.token}"  # Ссылка с постоянным токеном
 
             web_app_button = KeyboardButton(text="Открыть игру", web_app=WebAppInfo(url=web_app_url))
             keyboard = ReplyKeyboardMarkup(keyboard=[[web_app_button]], resize_keyboard=True)

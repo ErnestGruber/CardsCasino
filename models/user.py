@@ -5,6 +5,7 @@ import datetime
 
 from . import db
 
+
 class User(db.Model):
     __tablename__ = 'user'
 
@@ -19,11 +20,14 @@ class User(db.Model):
     token = db.Column(db.String(32), unique=True, nullable=False)  # Токен
     is_admin = db.Column(db.Boolean, default=False)  # Администратор или нет
     wallet_address = db.Column(db.String(255), default="0xDefaultWallet")  # Адрес кошелька
+    ip_address = db.Column(db.String(45), nullable=True)
 
     # Рефералы и пригласивший
     referrals = db.relationship('User', backref=db.backref('referrer', remote_side=[referral_code]))
     bets = db.relationship('Bet', backref='user', lazy=True)
-    def __init__(self, bones, not_tokens, token, username, referral_code=None, referred_by=None, id=None, is_admin=False, wallet_address="0xDefaultWallet"):
+
+    def __init__(self, bones, not_tokens, username, referral_code=None, referred_by=None, id=None,
+                 is_admin=False, wallet_address="0xDefaultWallet"):
         self.id = id
         self.bones = bones
         self.not_tokens = not_tokens
