@@ -1,4 +1,6 @@
 # from models import User, db, RoundStats, Card, Bet
+from app.models import Card, RoundStats
+
 
 # подсчет сатистики и запись в базу данных
 def calculate_winner_and_stats(round_id):

@@ -3,7 +3,8 @@ from quart import Blueprint, jsonify, request, session
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from services import process_referral_bonus
+from app.models import db, Round, Card, User, Bet
+from app.utils import process_referral_bonus
 
 game_api = Blueprint('game_api', __name__)
 

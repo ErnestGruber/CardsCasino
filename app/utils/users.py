@@ -4,7 +4,7 @@ import secrets
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models import Bet, User
+from app.models import Bet, User
 
 
 async def getBet(round_id, user_id: int, session: AsyncSession):

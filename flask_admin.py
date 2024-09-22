@@ -1,12 +1,12 @@
 from flask_admin import Admin, BaseView, expose
 from flask import request
 from werkzeug.utils import secure_filename
-from models import Round, Card, Bet, db, User, RoundStats
+from app.models import Round, Card, db
 import os
 from datetime import datetime
 
-from services import calculate_winner_and_stats
-from services.admin import admin_auth_required
+from app.utils import calculate_winner_and_stats
+from app.utils import admin_auth_required
 
 # Инициализация админ-панели
 admin = Admin()

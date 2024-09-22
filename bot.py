@@ -3,8 +3,8 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 from aiogram.filters import Command  # Импортируем фильтр для команд
 
-from api.user_api import generate_permanent_token
-from models import User, db
+from app.api.user_api import generate_permanent_token
+from app.models import User, db
 from config import Config
 import asyncio
 import secrets
@@ -66,7 +66,6 @@ async def send_welcome(message: types.Message):
                 not_tokens=0,
                 referral_code=referral_code,
                 referred_by=referred_by_user.referral_code if referred_by_user else None,
-                token=permanent_token  # Уникальный токен для постоянного доступа
             )
             db.session.add(new_user)
             db.session.commit()

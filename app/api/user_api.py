@@ -1,10 +1,14 @@
+import logging
 import secrets
 
 from quart import Blueprint, jsonify, session
 from sqlalchemy import select
+from flask import jsonify, request
 
-from models import User, db
+from app.models import User, db,ReferralStats
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.utils.users import register_user, get_ip
 
 user_api = Blueprint('user_api', __name__)
 
@@ -53,8 +57,6 @@ async def api_login(token_value):
             'is_admin': user.is_admin
         }), 200
 
-from flask import jsonify, request
-from models import User, ReferralStats, db
 
 @user_api.route('/api/referrals', methods=['GET'])
 async def get_referral_stats():

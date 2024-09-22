@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from models import db
+from app.models import db
 
 class Token(db.Model):
     __tablename__ = 'token'
