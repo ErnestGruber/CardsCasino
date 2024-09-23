@@ -1,11 +1,17 @@
-# from models import User, db, RoundStats, Card, Bet
-from app.models import Card, RoundStats
+from sqlalchemy.future import select
+from sqlalchemy import update
+from app.models import Card, RoundStats, Bet, User, ReferralStats, ReferralBonus
+from app.db import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.services import  ReferralStatsService
 
 
-# подсчет сатистики и запись в базу данных
-def calculate_winner_and_stats(round_id):
+# Подсчет статистики и запись в базу данных
+async def calculate_winner_and_stats(round_id: int, db: AsyncSession):
     # Получаем все карточки активного раунда
-    cards = Card.query.filter_by(round_id=round_id).all()
+    result = await db.execute(select(Card).filter_by(round_id=round_id))
+    cards = result.scalars().all()
 
     total_bones = sum(card.total_bones for card in cards)
     total_not = sum(card.total_not for card in cards)
@@ -18,14 +24,12 @@ def calculate_winner_and_stats(round_id):
     # Выявляем карту-победителя с наибольшими ставками
     winner_card = max(cards, key=lambda card: card.total_bones + card.total_not)
 
-    # Если у победителя есть BONES
     if winner_card:
         winning_bones = winner_card.total_bones
         winning_not = winner_card.total_not
 
-        # Коэффициенты для победителей
         bones_coefficient = min(bank_after_fee / winning_bones, 1.8) if winning_bones > 0 else 0
-        not_coefficient = (bank_after_fee / winning_not) if winning_not > 0 else 0
+        not_coefficient = bank_after_fee / winning_not if winning_not > 0 else 0
 
         # Сохраняем данные в таблицу RoundStats
         new_stats = RoundStats(
@@ -38,8 +42,8 @@ def calculate_winner_and_stats(round_id):
             not_coefficient=not_coefficient,
             winner_card_id=winner_card.id
         )
-        db.session.add(new_stats)
-        db.session.commit()
+        db.add(new_stats)
+        await db.commit()
 
         return {
             "total_bones": total_bones,
@@ -53,81 +57,75 @@ def calculate_winner_and_stats(round_id):
     else:
         return {"error": "Нет победителя в этом раунде"}
 
-
-
-# подсчет наград из таблицы (раунд должен быть завершен - добавить в конце)
-def distribute_rewards(round_id):
+# Асинхронное распределение наград
+async def distribute_rewards(round_id: int, db: AsyncSession):
     # Получаем статистику раунда
-    round_stats = RoundStats.query.filter_by(round_id=round_id).first()
+    result = await db.execute(select(RoundStats).filter_by(round_id=round_id))
+    round_stats = result.scalars().first()
     if not round_stats:
         return "Статистика для этого раунда не найдена!"
 
     # Получаем карту-победителя
-    winner_card = Card.query.filter_by(id=round_stats.winner_card_id).first()
+    result = await db.execute(select(Card).filter_by(id=round_stats.winner_card_id))
+    winner_card = result.scalars().first()
     if not winner_card:
         return "Карта-победитель не найдена!"
 
-    admin = User.query.filter_by(is_admin=True).first()
+    # Получаем администратора
+    result = await db.execute(select(User).filter_by(is_admin=True))
+    admin = result.scalars().first()
     if not admin:
         return "Администратор не найден!"
 
     # Получаем все ставки на победившую карту
-    winning_bets = Bet.query.filter_by(card_id=winner_card.id, round_id=round_id).all()
+    result = await db.execute(select(Bet).filter_by(card_id=winner_card.id, round_id=round_id))
+    winning_bets = result.scalars().all()
 
     for bet in winning_bets:
-        user = User.query.get(bet.user_id)
+        result = await db.execute(select(User).filter_by(id=bet.user_id))
+        user = result.scalars().first()
 
         # Рассчитываем выигрыш в зависимости от типа ставки
-        if bet.bet_type == "bones":
-            # Вычисляем выигрыш для ставок BONES
+        if bet.bet_type == "BONES":
             winnings = bet.amount * round_stats.bones_coefficient
-            # Учитываем ограничение на коэффициент
-            if round_stats.bones_coefficient > 1.8:
-                winnings = bet.amount * 1.8
-
-            # Добавляем выигрыш пользователю
+            winnings = min(winnings, bet.amount * 1.8)  # Ограничение на коэффициент
             user.bones += winnings
             print(f"Пользователь {user.username} получил {winnings} BONES")
-
-        elif bet.bet_type == "not_tokens":
-            # Вычисляем выигрыш для ставок NOT
+        elif bet.bet_type == "NOT":
             winnings = bet.amount * round_stats.not_coefficient
-
-            # Добавляем выигрыш пользователю
-            # Обновляем баланс пользователя и админа для NOT
             user.not_tokens += winnings
-            admin = User.query.filter_by(is_admin=True).first()
-            if admin.not_tokens >= winnings:
-                admin.not_tokens -= winnings
-                print(f"Пользователь {user.username} получил {winnings} NOT")
+            admin.not_tokens -= winnings  # Администратор платит выигрыш
+            print(f"Пользователь {user.username} получил {winnings} NOT")
 
-        # Сохраняем изменения в базе данных
-        db.session.add(user)
+        # Сохраняем изменения
+        db.add(user)
 
-    # Обновляем баланс администратора
-    db.session.add(admin)
-    db.session.commit()
+    db.add(admin)
+    await db.commit()
 
     return "Награды успешно распределены!"
 
-# Функция распределения бонусов
-def process_referral_bonus(user, referrer, bet_amount, bet_type):
-    admin_bonus = bet_amount * 0.10  # 10% админу
-    referrer_bonus = bet_amount * 0.05  # 5% пригласившему в BONES
-    admin = User.query.filter_by(is_admin=True).first()
+# Асинхронное распределение реферальных бонусов
+async def process_referral_bonus(user, referrer, bet_amount, bet_type, bet_id, db: AsyncSession):
 
-    if bet_type == "not_tokens":
-        # Администратор получает бонус в NOT токенах
+    resultAdmin = await db.execute(select(User).filter_by(is_admin=True))
+    admin = resultAdmin.scalars().first()
+
+    if bet_type == "NOT":
         if admin:
-            admin.not_tokens += admin_bonus  # Администратору начисляются 10% в NOT
-            print(f"Админу начислено {admin_bonus} NOT токенов")
-    else:
-        # Если ставка в BONES, реферер получает бонус в BONES
-        referrer.bones += referrer_bonus  # Бонус в BONES для реферера
-        print(f"Начислено {referrer_bonus} бонусных BONES пользователю {referrer.username} за ставку реферала {user.username}")
+            referrer_bonus = bet_amount * 0.05  # 5% пригласившему в BONES
+            referrer.bones += referrer_bonus  # Бонус в  для реферера
+            print(
+                f"Начислено {referrer_bonus} бонусных BONES пользователю {referrer.username} за ставку реферала {user.username}")
+            # Запись информации в таблицу referral_stats
+            referral_stats_service = ReferralStatsService(db)
+            await referral_stats_service.create_referral_stats(
+                referrer_id=referrer.id,
+                referral_id=user.id,
+                referral_bet_id=bet_id,  # Использование корректного идентификатора ставки
+                referrer_bonus=referrer_bonus
+            )
 
-    # Сохраняем изменения в базе данных
-    if admin:
-        db.session.add(admin)
-    db.session.add(referrer)
-    db.session.commit()
+    await db.commit()
+
+

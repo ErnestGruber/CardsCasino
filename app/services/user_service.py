@@ -6,17 +6,19 @@ class UserService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_user(self, username: str, bones: int = 100, not_tokens: int = 0,
+    async def create_user(self, id: int, token: str, username: str, bones: int = 100, not_tokens: int = 0,
                           referral_code: str = None, referred_by: str = None,
                           is_admin: bool = False, wallet_address: str = "0xDefaultWallet"):
         new_user = User(
+            id=id,
             username=username,
             bones=bones,
             not_tokens=not_tokens,
             referral_code=referral_code,
             referred_by=referred_by,
             is_admin=is_admin,
-            wallet_address=wallet_address
+            wallet_address=wallet_address,
+            token=token
         )
         self.session.add(new_user)
         await self.session.commit()
@@ -62,3 +64,19 @@ class UserService:
         if user:
             await self.session.delete(user)
             await self.session.commit()
+
+    async def check_referral_code_exists(self, referral_code: str) -> bool:
+        """Проверяет, существует ли пользователь с данным реферальным кодом"""
+        result = await self.session.execute(
+            select(User).filter_by(referral_code=referral_code)
+        )
+        user = result.scalars().first()
+        return user is not None
+
+    async def check_token_exists(self, token: str) -> bool:
+        """Проверяет, существует ли пользователь с данным токеном"""
+        result = await self.session.execute(
+            select(User).filter_by(token=token)
+        )
+        user = result.scalars().first()
+        return user is not None

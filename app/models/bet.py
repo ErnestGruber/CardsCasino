@@ -1,10 +1,7 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, CheckConstraint
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
-
 from app.models import Base
-
 
 class Bet(Base):
     __tablename__ = 'bet'
@@ -19,9 +16,13 @@ class Bet(Base):
     is_referral_bet = Column(Boolean, default=False)
 
     # Связи с другими таблицами
-    user = relationship('User', backref='bets', lazy='selectin')
-    card = relationship('Card', backref='bets', lazy='selectin')
-    round = relationship('Round', backref='bets', lazy='selectin')
+    user = relationship('User', back_populates='bets', overlaps="bets_from_user,bet_user")
+    card = relationship('Card', backref='bets_on_card', lazy='selectin')
+    round = relationship('Round', backref='bets_in_round', lazy='selectin')
+    # Добавляем ограничение на значения bet_type
+    __table_args__ = (
+        CheckConstraint(bet_type.in_(['NOT', 'BONES']), name='check_bet_type'),
+    )
 
     def __init__(self, user_id, card_id, amount, bet_type, round_id=None, is_referral_bet=False):
         super().__init__()

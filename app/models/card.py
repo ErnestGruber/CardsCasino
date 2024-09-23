@@ -17,7 +17,7 @@ class Card(Base):
     is_winner = Column(Boolean, default=False)
 
     # Связь с таблицей Round
-    round = relationship('Round', backref='cards', lazy='selectin')
+    round = relationship('Round', back_populates='cards', overlaps="cards,related_round")
 
     def __init__(self, image_url, round_id):
         super().__init__()

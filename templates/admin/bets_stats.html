@@ -1,34 +1,51 @@
-{% extends 'admin/base.html' %}
-{% block body %}
-<h2>Статистика ставок</h2>
-<p>Всего ставок (BONES и NOT): {{ total_bank }} </p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>Карточка</th>
-            <th>Ставки BONES</th>
-            <th>Ставки NOT</th>
-            <th>Процент от общего банка</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for stat in stats %}
-        <tr>
-            <td><img src="{{ stat.image_url }}" alt="Карточка" style="width: 100px;">{{ stat.image_url }}</td>
-            <td>{{ stat.total_bones }} BONES</td>
-            <td>{{ stat.total_not }} NOT</td>
-            <td>{{ stat.percentage }}%</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Статистика ставок</title>
+    <!-- Подключаем Bootstrap -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
 
-<h3>Подсчет победителей</h3>
-<ul>
-    <li>Общий банк: {{ results.total_bank }} BONES и NOT</li>
-    <li>Комиссия администратору: {{ results.admin_fee }}</li>
-    <li>Карта-победитель: {{ results.winner_card.image_url }}</li>
-    <li>Коэффициент выплат: {{ results.coefficient }}</li>
-</ul>
+    <div class="container mt-5">
+        <h2 class="mb-4">Статистика ставок</h2>
+        <p>Всего ставок (BONES и NOT): <strong>{{ total_bank }}</strong></p>
 
-{% endblock %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Карточка</th>
+                    <th scope="col">Ставки BONES</th>
+                    <th scope="col">Ставки NOT</th>
+                    <th scope="col">Процент от общего банка</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in stats %}
+                <tr>
+                    <td><img src="{{ stat.image_url }}" alt="Карточка" width="100"></td>
+                    <td>{{ stat.total_bones }} BONES</td>
+                    <td>{{ stat.total_not }} NOT</td>
+                    <td>{{ stat.percentage }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h3 class="mt-5">Подсчет победителей</h3>
+        <ul class="list-group">
+            <li class="list-group-item">Общий банк: <strong>{{ total_bank }}</strong> BONES и NOT</li>
+            <li class="list-group-item">Комиссия администратору: <strong>500 BONES</strong></li>
+            <li class="list-group-item">Карта-победитель: <strong>Card 1</strong></li>
+            <li class="list-group-item">Коэффициент выплат: <strong>2.5x</strong></li>
+        </ul>
+
+        <a href="/admin/home" class="btn btn-secondary mt-3">Назад</a>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+       <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

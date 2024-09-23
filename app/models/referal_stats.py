@@ -12,7 +12,6 @@ class ReferralStats(Base):
     referrer_id = Column(Integer, ForeignKey('user.id'), nullable=False)  # Пригласивший пользователь
     referral_id = Column(Integer, ForeignKey('user.id'), nullable=False)  # Приглашенный пользователь
     referral_bet_id = Column(Integer, ForeignKey('bet.id'), nullable=False)  # Ставка реферала
-    admin_bonus = Column(Integer, nullable=False)  # Бонус, который получил администратор
     referrer_bonus = Column(Integer, nullable=False)  # Бонус, который получил пригласивший игрок
 
     # Явное указание на внешние ключи через строки

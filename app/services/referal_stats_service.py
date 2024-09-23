@@ -12,7 +12,6 @@ class ReferralStatsService:
             referrer_id=referrer_id,
             referral_id=referral_id,
             referral_bet_id=referral_bet_id,
-            admin_bonus=admin_bonus,
             referrer_bonus=referrer_bonus
         )
         self.session.add(new_stats)

@@ -2,11 +2,14 @@
 import logging
 import secrets
 
-from fastapi import Header, HTTPException
+from fastapi import Header, HTTPException, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette import status
 
+from app.db.session import get_db
 from app.models import Bet, User
+from app.services import UserService
 
 
 async def getBet(round_id, user_id: int, session: AsyncSession):
@@ -78,3 +81,5 @@ async def get_token_from_header(authorization: str = Header(None)):
         raise HTTPException(status_code=403, detail="Invalid token format")
 
     return token_parts[1]  # Возвращаем
+
+

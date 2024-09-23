@@ -1,8 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.ext.declarative import declarative_base
-from datetime import datetime
 
 from app.models import Base
 
@@ -17,7 +14,7 @@ class Round(Base):
     end_time = Column(DateTime, nullable=False)
     is_active = Column(Boolean, default=False)
 
-    cards = relationship('Card', backref='round', lazy='selectin')
+    cards = relationship('Card', back_populates='round', overlaps="round,cards_in_round")
 
     def __init__(self, description, target, start_time, end_time, is_active=False):
         super().__init__()

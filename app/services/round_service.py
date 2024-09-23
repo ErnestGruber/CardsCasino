@@ -1,6 +1,8 @@
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
+
+from app.models import Card
 from app.models.round import Round
 
 
@@ -9,7 +11,8 @@ class RoundService:
         self.session = session
 
     async def create_round(self, description: str, target: str, start_time: datetime, end_time: datetime,
-                           is_active: bool = False):
+                           card_urls: list[str], is_active: bool = False):
+        # Создаем новый раунд
         new_round = Round(
             description=description,
             target=target,
@@ -19,6 +22,12 @@ class RoundService:
         )
         self.session.add(new_round)
         await self.session.commit()
+
+        # Добавляем карты, связанные с раундом
+        cards = [Card(image_url=url, round_id=new_round.id) for url in card_urls]
+        self.session.add_all(cards)
+        await self.session.commit()
+
         return new_round
 
     async def get_round_by_id(self, round_id: int):
@@ -51,3 +60,12 @@ class RoundService:
         if round_obj:
             await self.session.delete(round_obj)
             await self.session.commit()
+
+    async def get_active_round(self):
+        # Получаем активный раунд (где is_active=True)
+        result = await self.session.execute(
+            select(Round).filter_by(is_active=True)
+        )
+        active_round = result.scalars().first()
+
+        return active_round
