@@ -9,7 +9,7 @@ from . import Base
 class User(Base):
     __tablename__ = 'user'
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = Column(BigInteger, primary_key=True)
     username = Column(String(100), unique=True, nullable=False)
     bones = Column(Integer, default=100)  # Баланс BONES
     not_tokens = Column(Integer, default=0)  # Баланс NOT токенов

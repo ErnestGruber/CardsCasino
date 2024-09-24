@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
@@ -80,3 +81,19 @@ class UserService:
         )
         user = result.scalars().first()
         return user is not None
+
+    # Метод для обновления IP-адреса пользователя
+    async def update_user_ip(self, user_id: int, ip_address: str):
+        user = await self.get_user_by_id(user_id)
+        if user:
+            user.ip_address = ip_address
+            await self.session.commit()
+        return user
+
+        # Метод для получения токена по ID пользователя
+
+    async def get_user_token(self, user_id: int) -> str:
+        user = await self.get_user_by_id(user_id)
+        if user:
+            return user.token
+        raise HTTPException(status_code=404, detail="Token not found for user")

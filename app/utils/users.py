@@ -5,11 +5,8 @@ import secrets
 from fastapi import Header, HTTPException, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette import status
-
-from app.db.session import get_db
 from app.models import Bet, User
-from app.services import UserService
+
 
 
 async def getBet(round_id, user_id: int, session: AsyncSession):
@@ -57,7 +54,7 @@ async def register_user(async_session, username, user_id, client_ip, referral_co
             referral_code=new_referral_code,
             referred_by=referred_by_user.referral_code if referred_by_user else None,
             token=permanent_token,
-            ip_address=client_ip  # Записываем IP-адрес пользователя
+            # ip_address=client_ip  # Записываем IP-адрес пользователя
         )
 
         async_session.add(new_user)

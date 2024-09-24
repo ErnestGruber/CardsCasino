@@ -4,13 +4,14 @@ import sys
 
 from fastapi import FastAPI
 
-from app.api import game_api, user_api
+from app.api import game_api, user_api, deposit_api
 
 app = FastAPI()
 
 # Подключаем различные API
 app.include_router(user_api, prefix="/api/users", tags=["Users"])
 app.include_router(game_api, prefix="/api/game", tags=["Game"])
+app.include_router(deposit_api, prefix="/api/deposit", tags=["Game"])
 def signal_handler(sig, frame):
     print('Завершение работы сервера...')
     sys.exit(0)

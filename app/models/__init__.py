@@ -11,6 +11,7 @@ from .referral_bonus import ReferralBonus
 from .token import Token
 from .round_stats import RoundStats
 from .referal_stats import ReferralStats
+from .deposit_request import DepositRequest
 
 __all__ = [
     'User',
@@ -21,4 +22,5 @@ __all__ = [
     'Token',
     'RoundStats',
     'ReferralStats',
+    'DepositRequest',
 ]

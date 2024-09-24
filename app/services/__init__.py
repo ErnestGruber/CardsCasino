@@ -6,7 +6,7 @@ from .round_service import RoundService
 from .round_stats_service import RoundStatsService
 from .token_service import TokenService
 from .user_service import UserService
-
+from .deposit_service import DepositService
 __all__ = [
     "BetService",
     "CardService",
@@ -15,5 +15,6 @@ __all__ = [
     "RoundService",
     "RoundStatsService",
     "TokenService",
-    "UserService"
+    "UserService",
+    "DepositService",
 ]

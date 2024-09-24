@@ -1,17 +1,16 @@
 import logging
 import secrets
 
-from fastapi import APIRouter, Request, Depends, HTTPException, Header, Body
+from fastapi import APIRouter, Request, Depends, HTTPException, Header, Body, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 
 from app.db.session import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Bet, User
+from app.models import Bet, ReferralStats
 from app.services import UserService, ReferralStatsService, RoundStatsService
-from app.utils.users import register_user, get_ip, get_token_from_header
+from app.utils.users import get_token_from_header
 
 user_api = APIRouter()
 
@@ -20,31 +19,41 @@ SECRET_KEY = "your_secret_key"
 
 class LoginRequest(BaseModel):
     id: int = Field(..., description="ID пользователя")
-    token: str = Field(..., description="Токен пользователя")
-    referral_code: str = Field(None, description="Реферальный код")  #
+    username: str = Field(..., description="Username пользователя")
+    ip_address: str = Field(None, description="IP адрес пользователя")  # IP
 
 # POST запрос для логина
 @user_api.post('/login')
 async def api_login(
         login_data: LoginRequest,
+        response: Response,
         db: AsyncSession = Depends(get_db)
 ):
     logging.info("Запрос получен", login_data)
 
     user_service = UserService(db)
 
-    # Проверяем наличие пользователя по токену
-    user = await user_service.get_user_by_token(login_data.token)
+    # Проверяем наличие пользователя по id
+    user = await user_service.get_user_by_id(login_data.id)
 
-    if not user or user.id != login_data.id:
-        raise HTTPException(status_code=404, detail="User not found or incorrect ID")
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    # Если передан реферальный код, обрабатываем его
-    if login_data.referral_code and not user.referred_by:
-        referrer = await user_service.get_user_by_referral_code(login_data.referral_code)
-        if referrer and referrer.id != user.id:
-            user.referred_by = referrer.referral_code
-            await db.commit()
+    # Сверяем username, если отличается - обновляем его
+    if user.username != login_data.username:
+        user.username = login_data.username
+        await db.commit()  # Сохраняем изменения в базе
+
+    # Если есть IP адрес, обновляем его
+    if login_data.ip_address:
+        await user_service.update_user_ip(user.id, login_data.ip_address)
+        await db.commit()  # Сохраняем изменения в базе
+
+    # Получаем токен пользователя
+    token = await user_service.get_user_token(user.id)
+
+    # Устанавливаем токен в куки
+    response.set_cookie(key="token", value=token, httponly=True)
 
     return {
         'username': user.username,
@@ -160,25 +169,18 @@ async def get_user_stats(
 
     # Выигрыши от рефералов
     total_referral_wins = 0
-    referrals = await db.execute(select(User).filter_by(referred_by=user.referral_code))
-    referrals = referrals.scalars().all()
+    # Получаем реферальные бонусы
+    referral_bonuses = await db.execute(select(ReferralStats).filter_by(referrer_id=user.id))
+    referral_bonuses = referral_bonuses.scalars().all()
 
-    for referral in referrals:
-        referral_bets = await db.execute(select(Bet).filter_by(user_id=referral.id))
-        referral_bets = referral_bets.scalars().all()
-
-        for referral_bet in referral_bets:
-            round_stats = await round_stats_service.get_round_stats_by_round_id(referral_bet.round_id)
-            if round_stats and referral_bet.card_id == round_stats.winner_card_id:
-                total_referral_wins += round_stats.bones_coefficient * referral_bet.amount
-                total_referral_wins += round_stats.not_coefficient * referral_bet.amount
+    total_referral_wins = sum(bonus.referrer_bonus for bonus in referral_bonuses)
 
     return {
         'total_bet_bones': total_bet_bones,
         'total_bet_not': total_bet_not,
         'total_won_bones': total_won_bones,
         'total_won_not': total_won_not,
-        'total_referral_wins': total_referral_wins
+        'total_referral_bonus': total_referral_wins
     }
 
 
