@@ -70,13 +70,34 @@ async def get_deposits(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Получаем активную заявку
+    # Получаем необработанную заявку пользователя
     pending_deposit = await deposit_service.get_pending_deposit_request_user(user.id)
 
-    # Получаем все обработанные заявки
+    # Получаем все обработанные заявки пользователя
     complete_deposits = await deposit_service.get_complete_deposit_requests_user(user.id)
 
+    # Форматируем данные
+    formatted_pending_deposit = None
+    if pending_deposit:
+        formatted_pending_deposit = {
+            "is_processed": pending_deposit.is_processed,
+            "processed_at": pending_deposit.processed_at,
+            "amount": pending_deposit.amount,
+            "created_at": pending_deposit.created_at.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]
+        }
+
+    formatted_complete_deposits = [
+        {
+            "is_processed": deposit.is_processed,
+            "processed_at": deposit.processed_at.strftime('%Y-%m-%dT%H:%M:%S.%f')[
+                            :-3] if deposit.processed_at else None,
+            "amount": deposit.amount,
+            "created_at": deposit.created_at.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]
+        }
+        for deposit in complete_deposits
+    ]
+
     return {
-        "pending_deposit": pending_deposit,
-        "complete_deposits": complete_deposits
+        "pending_deposit": formatted_pending_deposit,
+        "complete_deposits": formatted_complete_deposits
     }
