@@ -21,17 +21,21 @@ class DepositService:
         await self.session.commit()
         return new_deposit
 
+    # Получение необработанной заявки пользователя
     async def get_pending_deposit_request_user(self, user_id: int):
-        result = await self.session.execute(select(DepositRequest).filter_by(user_id=user_id, is_processed=False))
-        return result.scalars().first()
+        # Получение активной (необработанной) заявки пользователя
+        result = await self.session.execute(
+            select(DepositRequest).filter_by(user_id=user_id, is_processed=False)
+        )
+        return result.scalars().first()  # Вернем только одну необработанную заявку (если есть)
 
-    async def get_all_deposit_requests_user(self):
-        pending = await self.session.execute(select(DepositRequest).filter_by(is_processed=False))
-        complete = await self.session.execute(select(DepositRequest).filter_by(is_processed=True))
-        return {
-            "pending": pending.scalars().all(),
-            "complete": complete.scalars().all()
-        }
+    # Получение всех заявок пользователя (обработанных и необработанных)
+    async def get_complete_deposit_requests_user(self, user_id: int):
+        # Получение всех обработанных заявок пользователя
+        result = await self.session.execute(
+            select(DepositRequest).filter_by(user_id=user_id, is_processed=True)
+        )
+        return result.scalars().all()  #
 
     # Получение всех необработанных заявок
     async def get_pending_deposits(self, start_date=None, end_date=None):

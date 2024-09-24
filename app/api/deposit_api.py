@@ -70,13 +70,13 @@ async def get_deposits(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Проверяем, является ли пользователь администратором
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Access forbidden")
+    # Получаем активную заявку
+    pending_deposit = await deposit_service.get_pending_deposit_request_user(user.id)
 
-    # Получаем обработанные и необработанные заявки
-    all_requests = await deposit_service.get_all_deposit_requests_user()
+    # Получаем все обработанные заявки
+    complete_deposits = await deposit_service.get_complete_deposit_requests_user(user.id)
+
     return {
-        "pending_deposits": all_requests["pending"],
-        "complete_deposits": all_requests["complete"]
+        "pending_deposit": pending_deposit,
+        "complete_deposits": complete_deposits
     }
