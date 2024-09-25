@@ -2,6 +2,8 @@ from fastapi import HTTPException
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
+from app.services.awards_service import AwardsService
+
 
 class UserService:
     def __init__(self, session: AsyncSession):
@@ -23,6 +25,11 @@ class UserService:
         )
         self.session.add(new_user)
         await self.session.commit()
+        # Создаем запись в таблице Awards с ложными правилами
+        awards_service = AwardsService(self.session)
+        await awards_service.create_award_for_user(user_id=new_user.id)
+
+
         return new_user
 
     async def get_user_by_id(self, user_id: int):

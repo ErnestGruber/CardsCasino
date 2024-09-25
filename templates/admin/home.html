@@ -12,10 +12,12 @@
     <div class="container mt-5">
         <h1 class="mb-4">Добро пожаловать в админскую панель</h1>
         <ul class="list-group">
-            <li class="list-group-item"><a href="{{ url_for('create_round') }}">Создать новый раунд</a></li>
-            <li class="list-group-item"><a href="{{ url_for('bets_stats') }}">Статистика ставок</a></li>
-            <li class="list-group-item"><a href="{{ url_for('get_deposits') }}">Активные заявки на пополнение</a></li>
-            <li class="list-group-item"><a href="{{ url_for('logout') }}">Выйти</a></li>
+            <li class="list-group-item"><a href="{{ url_for('round.create_round') }}">Создать новый раунд</a></li>
+            <li class="list-group-item"><a href="{{ url_for('bets_stats.bets_stats') }}">Статистика ставок</a></li>
+            <li class="list-group-item"><a href="{{ url_for('cashout.get_cashouts') }}">Активные заявки на вывод</a></li>
+            <li class="list-group-item"><a href="{{ url_for('deposits.get_deposits') }}">Активные заявки на пополнение</a></li>
+            <li class="list-group-item"><a href="{{ url_for('home.logout') }}">Выйти</a></li>
+
         </ul>
     </div>
 

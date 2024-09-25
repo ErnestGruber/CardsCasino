@@ -41,7 +41,10 @@
             <li class="list-group-item">Карта-победитель: <strong>Card 1</strong></li>
             <li class="list-group-item">Коэффициент выплат: <strong>2.5x</strong></li>
         </ul>
-
+       <!-- Кнопка для завершения раунда -->
+        <form method="POST" action="{{ url_for('bets_stats.end_round') }}">
+            <button type="submit" class="btn btn-danger mt-3">Закончить раунд</button>
+        </form>
         <a href="/admin/home" class="btn btn-secondary mt-3">Назад</a>
     </div>
 

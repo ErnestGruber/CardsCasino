@@ -12,6 +12,8 @@ from .token import Token
 from .round_stats import RoundStats
 from .referal_stats import ReferralStats
 from .deposit_request import DepositRequest
+from .cashout_request import CashoutRequest
+from .awards import Awards
 
 __all__ = [
     'User',
@@ -23,4 +25,5 @@ __all__ = [
     'RoundStats',
     'ReferralStats',
     'DepositRequest',
+    'CashoutRequest'
 ]

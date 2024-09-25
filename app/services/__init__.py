@@ -7,6 +7,8 @@ from .round_stats_service import RoundStatsService
 from .token_service import TokenService
 from .user_service import UserService
 from .deposit_service import DepositService
+from .cashout_service import CashoutService
+from .awards_service import AwardsService
 __all__ = [
     "BetService",
     "CardService",
@@ -17,4 +19,6 @@ __all__ = [
     "TokenService",
     "UserService",
     "DepositService",
+    "CashoutService",
+    "AwardsService"
 ]

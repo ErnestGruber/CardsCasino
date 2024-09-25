@@ -55,11 +55,14 @@ class RoundService:
             await self.session.commit()
         return round_obj
 
-    async def delete_round(self, round_id: int):
-        round_obj = await self.get_round_by_id(round_id)
-        if round_obj:
-            await self.session.delete(round_obj)
+    # Метод для завершения активного раунда
+    async def end_round(self, round_id: int):
+        active_round = await self.get_round_by_id(round_id)
+        if active_round and active_round.is_active:
+            active_round.is_active = False
+            active_round.end_time = datetime.utcnow()  # Устанавливаем время окончания
             await self.session.commit()
+        return active_round
 
     async def get_active_round(self):
         # Получаем активный раунд (где is_active=True)
@@ -69,3 +72,12 @@ class RoundService:
         active_round = result.scalars().first()
 
         return active_round
+
+    async def get_latest_round(self):
+        # Получаем последний раунд по ID
+        result = await self.session.execute(
+            select(Round).order_by(Round.id.desc()).limit(1)
+        )
+        latest_round = result.scalars().first()
+
+        return latest_round
