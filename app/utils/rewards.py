@@ -4,14 +4,14 @@ from app.models import Card, RoundStats, Bet, User, ReferralStats, ReferralBonus
 from app.db import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services import  ReferralStatsService
+from app.services import ReferralStatsService, CardService
 
 
 # Подсчет статистики и запись в базу данных
 async def calculate_winner_and_stats(round_id: int, db: AsyncSession):
     # Получаем все карточки активного раунда
-    result = await db.execute(select(Card).filter_by(round_id=round_id))
-    cards = result.scalars().all()
+    card_service = CardService(db)
+    cards = await card_service.get_cards_by_round_id(round_id)
 
     total_bones = sum(card.total_bones for card in cards)
     total_not = sum(card.total_not for card in cards)
@@ -23,7 +23,10 @@ async def calculate_winner_and_stats(round_id: int, db: AsyncSession):
 
     # Выявляем карту-победителя с наибольшими ставками
     winner_card = max(cards, key=lambda card: card.total_bones + card.total_not)
-
+    for card in cards:
+        card_percentage = ((card.total_bones + card.total_not) / total_bank) * 100 if total_bank > 0 else 0
+        card.percentage_of_bank = card_percentage
+    await db.commit()
     if winner_card:
         winning_bones = winner_card.total_bones
         winning_not = winner_card.total_not
@@ -129,3 +132,25 @@ async def process_referral_bonus(user, referrer, bet_amount, bet_type, bet_id, d
     await db.commit()
 
 
+#получение ставок
+async def update_card_percentages(round_id: int, db: AsyncSession):
+    # Получаем все карточки раунда
+    card_service = CardService(db)
+    cards = await card_service.get_cards_by_round_id(round_id)
+
+    # Рассчитываем общий банк
+    total_bones = sum(card.total_bones for card in cards)
+    total_not = sum(card.total_not for card in cards)
+    total_bank = total_bones + total_not
+
+    if total_bank > 0:
+        # Для каждой карточки рассчитываем процент от общего банка
+        for card in cards:
+            card_percentage = ((card.total_bones + card.total_not) / total_bank) * 100
+            card.percentage_of_bank = card_percentage
+    else:
+        # Если банк пуст, устанавливаем процент для всех карточек в 0
+        for card in cards:
+            card.percentage_of_bank = 0
+
+    await db.commit()

@@ -7,6 +7,7 @@ from admin_routes.required import login_required
 from app.db import get_db
 from app.models import Card, Round
 from app.services import RoundService
+from app.utils.rewards import update_card_percentages
 
 bets_stats_bp = Blueprint('bets_stats', __name__)
 
@@ -46,7 +47,8 @@ async def bets_stats():
     finally:
         await session.close()
 
-@bets_stats_bp.route('/admin/end-round', methods=['POST'])
+
+@bets_stats_bp.route('/end-round', methods=['POST'])
 @login_required
 async def end_round():
     db = get_db()
@@ -59,8 +61,12 @@ async def end_round():
         if not active_round:
             return jsonify({"error": "Нет активного раунда"}), 400
 
+        # Обновляем проценты карт
+        await update_card_percentages(active_round.id, session)  # Передаем active_round.id, а не сам объект
+
         # Завершаем активный раунд
         await round_service.end_round(active_round.id)
-        return redirect(url_for('admin_rounds'))  # Перенаправление на страницу раундов
+
+        return jsonify({"message": "Раунд успешно завершён"}), 200
     finally:
         await session.close()

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -15,6 +15,7 @@ class Card(Base):
     total_not = Column(Integer, default=0)
     total_bank = Column(Integer, default=0)
     is_winner = Column(Boolean, default=False)
+    percentage_of_bank = Column(Float, default=0.0)
 
     # Связь с таблицей Round
     round = relationship('Round', back_populates='cards', overlaps="cards,related_round")
