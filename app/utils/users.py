@@ -7,8 +7,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Bet, User
 
-
-
 async def getBet(round_id, user_id: int, session: AsyncSession):
     # Создаем запрос для поиска ставки пользователя на указанный раунд
     async with session.begin():

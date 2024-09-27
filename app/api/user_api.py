@@ -9,7 +9,7 @@ from app.db.session import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Bet, ReferralStats
-from app.services import UserService, ReferralStatsService, RoundStatsService
+from app.services import UserService, ReferralStatsService, RoundStatsService, BetService, CardService
 from app.utils.users import get_token_from_header
 
 user_api = APIRouter()
@@ -237,6 +237,7 @@ async def register_user(
     except Exception as e:
         logging.error(f"Ошибка при регистрации пользователя: {e}")
         raise HTTPException(status_code=500, detail="Error during registration")
+
 
 # Генерация уникального реферального кода
 async def generate_referral_code(user_service: UserService) -> str:

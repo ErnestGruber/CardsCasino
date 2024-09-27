@@ -20,7 +20,7 @@ async def bets_stats():
 
     try:
         active_round = await round_service.get_active_round()
-
+        #Todo - брать по get_latest_round
         if not active_round:
             return jsonify({"message": "Нет активного раунда для отображения статистики."})
 
