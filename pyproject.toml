@@ -12,6 +12,7 @@ sqlalchemy = "2.0.35"
 pydantic = "2.8.2"
 typing_extencions = "4.12.2"
 alembic = "1.13.2"
+aiogram = "3.13.0"
 
 [build-system]
 requires = ["poetry-core"]
