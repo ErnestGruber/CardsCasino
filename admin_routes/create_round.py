@@ -9,6 +9,7 @@ from admin_routes.required import login_required
 from app.db import get_db
 from app.models import Round, Card
 
+# ToDo - поменять getDb на AsyncSessionLocal в связи с разными завистями в фласке и фастапи
 round = Blueprint('round', __name__)
 # Создание нового раунда
 @round.route('/create-round', methods=['GET', 'POST'])

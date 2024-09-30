@@ -1,21 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field, validator
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.services import UserService, CashoutService
-from app.services.deposit_service import DepositService
 from app.utils.users import get_token_from_header
-
-
-class CashoutRequestModel(BaseModel):
-    wallet_address: str
-    amount: int
-
+from app.api.schemas.cashout import CashoutRequestModel, CashoutResponseModel, CashoutHistoryResponseModel  # Импортируем схемы
 
 cashout_api = APIRouter()
 
 
-@cashout_api.post('/cashout')
+# Запрос на вывод средств
+@cashout_api.post('/cashout', response_model=CashoutResponseModel)
 async def request_cashout(
         cashout_request: CashoutRequestModel,
         db: AsyncSession = Depends(get_db),
@@ -24,31 +18,33 @@ async def request_cashout(
     user_service = UserService(db)
     cashout_service = CashoutService(db)
 
-    # Получаем пользователя по токену
     user = await user_service.get_user_by_token(token_value)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Проверяем наличие необработанной заявки на вывод
     pending_request = await cashout_service.get_pending_cashout_request_user(user.id)
     if pending_request:
         raise HTTPException(status_code=400, detail="Pending cashout request already exists.")
 
-    # Проверяем, хватает ли средств для вывода
     if user.not_tokens < cashout_request.amount:
         raise HTTPException(status_code=400, detail="Insufficient funds for cashout.")
 
-    # Создаем новую заявку на вывод средств
-    new_cashout = await cashout_service.create_cashout_request(user.id, cashout_request.wallet_address,
-                                                               cashout_request.amount)
+    new_cashout = await cashout_service.create_cashout_request(user.id, cashout_request.wallet_address, cashout_request.amount)
 
-    # Обновляем баланс пользователя
     await user_service.update_user_not_tokens(user.id, -cashout_request.amount)
 
-    return {"message": "Cashout request created", "request_id": new_cashout.id}
+    return {
+        "id": new_cashout.id,
+        "amount": cashout_request.amount,
+        "wallet_address": cashout_request.wallet_address,
+        "is_processed": new_cashout.is_processed,
+        "created_at": new_cashout.created_at.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3],
+        "processed_at": new_cashout.processed_at.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] if new_cashout.processed_at else None
+    }
 
 
-@cashout_api.get('/cashout/history')
+# История заявок на вывод средств
+@cashout_api.get('/cashout/history', response_model=CashoutHistoryResponseModel)
 async def get_cashout_history(
         db: AsyncSession = Depends(get_db),
         token_value: str = Depends(get_token_from_header)
@@ -56,15 +52,12 @@ async def get_cashout_history(
     user_service = UserService(db)
     cashout_service = CashoutService(db)
 
-    # Получаем пользователя по токену
     user = await user_service.get_user_by_token(token_value)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Получаем историю заявок на вывод средств
     all_requests = await cashout_service.get_all_cashout_requests_user(user.id)
 
-    # Форматирование данных
     formatted_requests = [
         {
             "id": request.id,
