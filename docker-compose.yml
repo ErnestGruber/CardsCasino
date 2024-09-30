@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  # Сервис базы данных
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: 2281337  # Замените на ваш пароль
+      POSTGRES_DB: royal          # Название базы данных
+    volumes:
+      - ./data:/var/lib/postgresql/data  # Монтирование данных
+    ports:
+      - "5432:5432"  # Проброс порта для подключения
+
+  # Сервис для FastAPI (клиентское API)
+  web:
+    build:
+      context: .  # Путь к Dockerfile
+    command: uvicorn client_api:app --host 0.0.0.0 --port 8000  # Запуск FastAPI
+    volumes:
+      - .:/app  # Монтирование исходного кода
+    ports:
+      - "8000:8000"  # Порт для доступа к FastAPI
+    depends_on:
+      - db  # FastAPI будет ждать запуска базы данных
+  bot:
+    build:
+      context: .  # Путь к Dockerfile
+    command: python bot.py  # Команда для запуска бота
+    volumes:
+      - .:/app  # Монтирование исходного кода
+    depends_on:
+      - db
+      - web
+volumes:
+  data:

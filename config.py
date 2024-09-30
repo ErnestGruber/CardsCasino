@@ -2,7 +2,7 @@ import os
 
 class Config:
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-
+    DATABASE_URL = "postgresql+asyncpg://postgres:2281337@77.221.152.67:5432/royal"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
     TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "7468220229:AAHQwWjFBKz5JeH8TjL-JfZGEgeF6oDL0mQ")
