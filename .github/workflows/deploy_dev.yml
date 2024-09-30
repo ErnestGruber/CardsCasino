@@ -20,6 +20,5 @@ jobs:
                 key: ${{ secrets.SSH_KEY }}
                 script: |
                     cd /home/github/casino/CardsCasino
-                    # sudo /home/github/scripts/dev_grant_github.sh
                     git pull git@github.com:ErnestGruber/CardsCasino.git master
-                    # sudo /home/github/scripts/dev_grant_admin.sh
+                    uvicorn client_api:app --host 0.0.0.0 --port 8000
