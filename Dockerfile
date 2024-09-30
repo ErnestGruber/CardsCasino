@@ -1,5 +1,5 @@
 # Используем официальный образ Python
-FROM python:3.9-slim
+FROM python:3.12-slim
 
 # Устанавливаем curl для загрузки Poetry
 RUN apt-get update && apt-get install -y curl
