@@ -20,6 +20,6 @@ jobs:
                 key: ${{ secrets.SSH_KEY }}
                 script: |
                     cd /casino/CardsCasino
-                    sudo /home/github/scripts/dev_grant_github.sh
+                    # sudo /home/github/scripts/dev_grant_github.sh
                     git pull git@github.com:ErnestGruber/CardsCasino.git master
-                    sudo /home/github/scripts/dev_grant_admin.sh
+                    # sudo /home/github/scripts/dev_grant_admin.sh
