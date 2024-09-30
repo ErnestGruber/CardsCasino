@@ -1,0 +1,25 @@
+name: Deploy to Test Server
+
+on:
+    push:
+        branches:
+            - master
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout Code
+            uses: actions/checkout@v2
+
+          - name: Deploy to Server
+            uses: appleboy/ssh-action@master
+            with:
+                host: ${{ secrets.SERVER_IP }}
+                username: github
+                key: ${{ secrets.SSH_KEY }}
+                script: |
+                    cd /casino/
+                    sudo /home/github/scripts/dev_grant_github.sh
+                    git pull git@github.com:ErnestGruber/CardsCasino.git master
+                    sudo /home/github/scripts/dev_grant_admin.sh
