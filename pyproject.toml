@@ -18,3 +18,13 @@ uvicorn = "0.30.6"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+# Команда для выполнения миграций
+migrate = "alembic upgrade head"
+# Команда для запуска базы данных через Docker
+run-db = "docker-compose up db"
+# Команда для остановки базы данных через Docker
+stop-db = "docker-compose down db"
+# Команда для запуска приложения с FastAPI и ботом
+run-all = "docker-compose up --build -d"

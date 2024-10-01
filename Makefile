@@ -37,3 +37,11 @@ run-all:
 # Команда для остановки всех приложений (бот, API)
 stop-all:
 	$(DOCKER_COMPOSE) down
+
+# Команда для запуска базы данных
+run-db:
+	$(DOCKER_COMPOSE) up db
+
+# Команда для остановки базы данных
+stop-db:
+	$(DOCKER_COMPOSE) down db

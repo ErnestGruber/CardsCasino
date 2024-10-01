@@ -4,11 +4,9 @@ FROM python:3.12-slim
 # Устанавливаем curl для загрузки Poetry
 RUN apt-get update && apt-get install -y curl
 
-# Устанавливаем Poetry
-RUN curl -sSL https://install.python-poetry.org | python3 -
-
-# Добавляем Poetry в PATH
-ENV PATH="/root/.local/bin:$PATH"
+# Устанавливаем pip и Poetry через pip
+RUN pip install --upgrade pip
+RUN pip install poetry
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
