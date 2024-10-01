@@ -1,47 +1,57 @@
-# Переменные для команд
-DOCKER_COMPOSE = docker-compose
-POETRY = poetry
+PROJECT_NAME = cardcasino
+TEST_PATH = ./tests
 
-# Команда для установки зависимостей
-install:
-	$(POETRY) install
+HARBOR_USERNAME ?=
+HARBOR_PASSWORD ?=
+HARBOR_REGISTRY ?=
+IMAGE_NAME ?= backend/cardcasino
+TAG = $(shell git rev-parse --short=8 HEAD)
 
-# Команда для сборки и запуска всех сервисов через Docker Compose
-up:
-	$(DOCKER_COMPOSE) up --build
+lint:  ## Lint project code.
+	poetry run ruff check --fix .
 
-# Команда для остановки и удаления контейнеров
-down:
-	$(DOCKER_COMPOSE) down
+develop: clean_dev  ##@Develop Create project venv
+	python3.12 -m venv .venv
+	.venv/bin/pip install -U pip poetry
+	.venv/bin/poetry config virtualenvs.create false
+	.venv/bin/poetry install
+	.venv/bin/pre-commit install
 
-# Команда для просмотра логов всех сервисов
-logs:
-	$(DOCKER_COMPOSE) logs -f
+local:
+	docker compose -f docker-compose.dev.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes
 
-# Команда для выполнения миграций
-migrate:
-	$(POETRY) run alembic upgrade head
+local_down: ##@Develop Stop dev containers with delete volumes
+	docker compose -f docker-compose.dev.yaml down -v
 
-# Команда для запуска бота локально
-run-bot:
-	$(POETRY) run python bot.py
+docker-apply-migrations:
+	docker compose exec back python -m $(PROJECT_NAME).infrastructure.database upgrade head
 
-# Команда для запуска FastAPI локально
-run-api:
-	$(POETRY) run uvicorn client_api:app --host 0.0.0.0 --port 8000
+test: ##@Tests Run tests
+	.venv/bin/pytest -vx $(TEST_PATH)
 
-# Команда для запуска обоих приложений (бот и API) в Docker
-run-all:
-	$(DOCKER_COMPOSE) up --build -d
+test-ci: ##@Test Run tests with pytest and coverage in CI
+	.venv/bin/coverage run -m pytest $(TEST_PATH) --junitxml=junit.xml
+	.venv/bin/coverage report
+	.venv/bin/coverage xml
 
-# Команда для остановки всех приложений (бот, API)
-stop-all:
-	$(DOCKER_COMPOSE) down
+lint-ci: ruff mypy  ##@Linting Run all linters in CI
 
-# Команда для запуска базы данных
-run-db:
-	$(DOCKER_COMPOSE) up db
+ruff: ##@Linting Run ruff
+	.venv/bin/ruff check ./$(PROJECT_NAME)
 
-# Команда для остановки базы данных
-stop-db:
-	$(DOCKER_COMPOSE) down db
+mypy: ##@Linting Run mypy
+	.venv/bin/mypy ./$(PROJECT_NAME) --config-file ./pyproject.toml --enable-incomplete-feature=NewGenericSyntax
+
+clean_dev:
+	rm -rf .venv/
+
+clean_pycache:
+	find . -type d -name __pycache__ -exec rm -r {} \+
+
+build:
+	@echo -n "$(HARBOR_PASSWORD)" | docker login --username $(HARBOR_USERNAME) --password-stdin $(HARBOR_REGISTRY)
+	@docker build -t $(HARBOR_REGISTRY)/$(IMAGE_NAME):$(TAG) -f Dockerfile .
+	@docker push $(HARBOR_REGISTRY)/$(IMAGE_NAME):$(TAG)
+	@echo "Pushing Docker image: $(HARBOR_REGISTRY)/$(IMAGE_NAME):$(TAG)"
+	@docker logout $(HARBOR_REGISTRY)
+	@echo "Build and push process completed."
