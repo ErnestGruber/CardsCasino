@@ -19,12 +19,8 @@ jobs:
                 username: github
                 key: ${{ secrets.SSH_KEY }}
                 script: |
-                    export DATABASE_USER="postgres"
-                    export DATABASE_PASSWORD="2281337"
-                    export DATABASE_HOST="localhost"
-                    export DATABASE_PORT="5432"
-                    export DATABASE_NAME="royal"
                     cd /casino/
+                    source .env
                     sudo /home/github/scripts/dev_grant_github.sh
                     git pull git@github.com:ErnestGruber/CardsCasino.git master
                     sudo /home/github/scripts/dev_grant_admin.sh
