@@ -12,14 +12,6 @@ jobs:
           - name: Checkout Code
             uses: actions/checkout@v2
 
-          - name: Load environment variables
-            run: |
-              export DATABASE_USER="postgres"
-              export DATABASE_PASSWORD="2281337"
-              export DATABASE_HOST="localhost"
-              export DATABASE_PORT="5432"
-              export DATABASE_NAME="royal"
-
           - name: Deploy to Server
             uses: appleboy/ssh-action@master
             with:
@@ -27,8 +19,8 @@ jobs:
                 username: github
                 key: ${{ secrets.SSH_KEY }}
                 script: |
-                    cd /home/github/casino/CardsCasino
+                    cd /casino/
+                    source .env
+                    sudo /home/github/scripts/dev_grant_github.sh
                     git pull git@github.com:ErnestGruber/CardsCasino.git master
-                    make develop
-                    source .venv/bin/activate
-                    uvicorn client_api:app --host 0.0.0.0 --port 8000
+                    sudo /home/github/scripts/dev_grant_admin.sh
