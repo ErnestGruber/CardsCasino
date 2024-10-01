@@ -14,7 +14,11 @@ jobs:
 
           - name: Load environment variables
             run: |
-                export $(grep -v '^#' .env | xargs)
+              export DATABASE_USER="postgres"
+              export DATABASE_PASSWORD="2281337"
+              export DATABASE_HOST="localhost"
+              export DATABASE_PORT="5432"
+              export DATABASE_NAME="royal"
 
           - name: Deploy to Server
             uses: appleboy/ssh-action@master
