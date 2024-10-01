@@ -12,10 +12,6 @@ jobs:
           - name: Checkout Code
             uses: actions/checkout@v2
 
-          - name: Load environment variables
-            run: |
-                export $(grep -v '^#' .env | xargs)
-
           - name: Deploy to Server
             uses: appleboy/ssh-action@master
             with:
@@ -24,6 +20,7 @@ jobs:
                 key: ${{ secrets.SSH_KEY }}
                 script: |
                     cd /casino/
+                    source .env
                     sudo /home/github/scripts/dev_grant_github.sh
                     git pull git@github.com:ErnestGruber/CardsCasino.git master
                     sudo /home/github/scripts/dev_grant_admin.sh
