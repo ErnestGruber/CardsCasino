@@ -1,10 +1,25 @@
+from dataclasses import dataclass, field
 import os
+from os import getenv, environ
 
+
+@dataclass(frozen=True, slots=True, kw_only=True)
 class Config:
-    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-    DATABASE_URL = "postgresql+asyncpg://postgres:2281337@localhost:5432/royal"
-    print(DATABASE_URL)
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    TELEGRAM_BOT_TOKEN = "TELEGRAM_BOT_TOKEN", "7468220229:AAHQwWjFBKz5JeH8TjL-JfZGEgeF6oDL0mQ"
-    UPLOAD_FOLDER = 'static/uploads'
-    ADMIN_PASSWORD = "3dCKl}a%0g~H|@m$yY"
+    base_dir: str = field(
+        default=os.path.abspath(os.path.dirname(__file__))
+        )
+    database_url: str = field(
+        default_factory=lambda: environ["DATABASE_URL"]
+        )
+    sql_alchemy_track_modifications: bool = field(
+        default_factory=lambda: bool(environ["SQL_ALCHEMY_TRACK_MODIFICATIONS"])
+        )
+    telegram_bot_token: str = field(
+        default_factory=lambda: environ["TELEGRAM_BOT_TOKEN"]
+    )
+    upload_folder: str = field(
+        default_factory=lambda: environ["UPLOAD_FOLDER"]
+    )
+    admin_password: str = field(
+        default_factory=lambda: environ["ADMIN_PASSWORD"]
+    )
