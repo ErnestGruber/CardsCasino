@@ -1,7 +1,6 @@
 from quart import Blueprint, render_template,  jsonify, redirect, url_for
-
 from admin_routes.required import login_required
-from app.db import get_db
+from app.db.session import AsyncSessionLocal
 from app.services import CashoutService
 
 cashout = Blueprint('cashout', __name__)
@@ -10,8 +9,8 @@ cashout = Blueprint('cashout', __name__)
 @cashout.route('/cashouts', methods=['GET'])
 @login_required
 async def get_cashouts():
-    db = get_db()
-    session = await db.__anext__()
+    session = AsyncSessionLocal()
+
     try:
         cashout_service = CashoutService(session)
 
@@ -32,8 +31,7 @@ async def get_cashouts():
 @cashout.route('/cashouts/approve/<int:cashout_id>', methods=['POST'])
 @login_required
 async def approve_cashout(cashout_id):
-    db = get_db()
-    session = await db.__anext__()
+    session = AsyncSessionLocal()
     try:
         cashout_service = CashoutService(session)
         success = await cashout_service.approve_cashout(cashout_id)
@@ -48,8 +46,7 @@ async def approve_cashout(cashout_id):
 @cashout.route('/cashouts/reject/<int:cashout_id>', methods=['POST'])
 @login_required
 async def reject_cashout(cashout_id):
-    db = get_db()
-    session = await db.__anext__()
+    session = AsyncSessionLocal()
     try:
         cashout_service = CashoutService(session)
         success = await cashout_service.reject_cashout(cashout_id)

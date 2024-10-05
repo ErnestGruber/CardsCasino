@@ -6,34 +6,29 @@ from sqlalchemy import update
 from werkzeug.utils import secure_filename
 
 from admin_routes.required import login_required
-from app.db import get_db
-from app.models import Round, Card
+from app.db.session import AsyncSessionLocal
+from app.services import RoundService, CardService
 
-# ToDo - поменять getDb на AsyncSessionLocal в связи с разными завистями в фласке и фастапи
+
 round = Blueprint('round', __name__)
+
+
 # Создание нового раунда
 @round.route('/create-round', methods=['GET', 'POST'])
 @login_required
 async def create_round():
-    if request.method == 'POST':
-        db = get_db()
-        session = await db.__anext__()
+    session = AsyncSessionLocal()
 
-        try:
+    try:
+        if request.method == 'POST':
+            round_service = RoundService(session)
+            card_service = CardService(session)
+
             form = await request.form
             description = form.get('description')
             target = form.get('target')
             start_time = datetime.strptime(form.get('start_time'), "%Y-%m-%dT%H:%M")
             end_time = datetime.strptime(form.get('end_time'), "%Y-%m-%dT%H:%M")
-
-            # Деактивируем все текущие раунды
-            await session.execute(update(Round).values(is_active=False))
-            await session.commit()
-
-            # Создаем новый активный раунд
-            new_round = Round(description=description, target=target, start_time=start_time, end_time=end_time, is_active=True)
-            session.add(new_round)
-            await session.commit()
 
             # Получаем и сохраняем изображения карточек
             upload_folder = 'static/uploads/'
@@ -53,21 +48,28 @@ async def create_round():
             filename3 = secure_filename(card3_image.filename)
             await card3_image.save(os.path.join(upload_folder, filename3))
 
-            # Добавляем карточки в базу данных
-            card1 = Card(image_url=os.path.join(upload_folder, filename1), round_id=new_round.id)
-            card2 = Card(image_url=os.path.join(upload_folder, filename2), round_id=new_round.id)
-            card3 = Card(image_url=os.path.join(upload_folder, filename3), round_id=new_round.id)
+            # Создаем новый активный раунд через сервис
+            new_round = await round_service.create_round(
+                description=description,
+                target=target,
+                start_time=start_time,
+                end_time=end_time,
+                card_urls=[],
+                is_active=True
+            )
 
-            session.add_all([card1, card2, card3])
-            await session.commit()
+            # Теперь добавляем карты в базу через CardService
+            await card_service.create_card(image_url=os.path.join(upload_folder, filename1), round_id=new_round.id)
+            await card_service.create_card(image_url=os.path.join(upload_folder, filename2), round_id=new_round.id)
+            await card_service.create_card(image_url=os.path.join(upload_folder, filename3), round_id=new_round.id)
 
-            return jsonify({"message": "Раунд успешно создан", "status": "success"}), 200
+            return jsonify({"message": "Раунд и карточки успешно созданы", "status": "success"}), 200
 
-        except Exception as e:
-            await session.rollback()
-            return jsonify({"message": f"Ошибка при создании раунда: {str(e)}", "status": "error"}), 500
+    except Exception as e:
+        await session.rollback()
+        return jsonify({"message": f"Ошибка при создании раунда: {str(e)}", "status": "error"}), 500
 
-        finally:
-            await session.close()
+    finally:
+        await session.close()  # Закрываем сессию
 
     return await render_template('admin/round_form.html')

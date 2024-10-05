@@ -11,7 +11,7 @@ async def login():
         # Пример простой авторизации
         if username == "admin" and password == "password":  # Замените на вашу логику проверки
             quart_session['logged_in'] = True
-            return redirect(url_for('admin_home'))
+            return redirect(url_for('home.admin_home'))
         return "Неправильные учетные данные"
 
     return await render_template('admin/login.html')

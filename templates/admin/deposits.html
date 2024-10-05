@@ -75,10 +75,10 @@
                     <td>{{ deposit[0].amount }}</td>
                     <td>{{ deposit[0].created_at }}.strftime('%Y-%m-%d %H:%M')</td>
                     <td>
-                        <form method="POST" action="{{ url_for('approve_deposit', deposit_id=deposit[0].id) }}" style="display:inline;">
+                        <form method="POST" action="{{ url_for('deposits.approve_deposit', deposit_id=deposit[0].id) }}" style="display:inline;">
                             <button type="submit" class="btn btn-success">Одобрить</button>
                         </form>
-                        <form method="POST" action="{{ url_for('reject_deposit', deposit_id=deposit[0].id) }}" style="display:inline;">
+                        <form method="POST" action="{{ url_for('deposits.reject_deposit', deposit_id=deposit[0].id) }}" style="display:inline;">
                             <button type="submit" class="btn btn-danger">Отклонить</button>
                         </form>
                     </td>

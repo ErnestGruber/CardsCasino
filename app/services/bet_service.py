@@ -19,6 +19,17 @@ class BetService:
         )
         self.session.add(new_bet)
         await self.session.commit()
+        # Обновляем статистику раунда в зависимости от типа ставки
+        from app.services import RoundStatsService
+        round_stats_service = RoundStatsService(self.session)
+
+        if bet_type == "BONUS":
+            # Увеличиваем только total_bones
+            await round_stats_service.update_bank(round_id, bones_increase=amount)
+        elif bet_type == "NOT":
+            # Увеличиваем только total_not
+            await round_stats_service.update_bank(round_id, not_increase=amount)
+
         return new_bet
 
     async def get_bet_by_id(self, bet_id: int):
@@ -46,3 +57,14 @@ class BetService:
         if bet:
             await self.session.delete(bet)
             await self.session.commit()
+
+    async def has_user_bet_in_round(self, user_id: int, round_id: int):
+        """
+        Проверяет, делал ли пользователь ставку в данном раунде.
+        Возвращает True, если есть хотя бы одна ставка, иначе False.
+        """
+        result = await self.session.execute(
+            select(Bet).filter_by(user_id=user_id, round_id=round_id)
+        )
+        bet = result.scalars().first()
+        return bet is not None

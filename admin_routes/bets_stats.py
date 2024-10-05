@@ -1,10 +1,7 @@
-from datetime import datetime
-
 from quart import Blueprint, render_template, jsonify, redirect, url_for
 from sqlalchemy import select
-
 from admin_routes.required import login_required
-from app.db import get_db
+from app.db.session import AsyncSessionLocal
 from app.models import Card, Round
 from app.services import RoundService
 from app.utils.rewards import update_card_percentages
@@ -14,8 +11,7 @@ bets_stats_bp = Blueprint('bets_stats', __name__)
 @bets_stats_bp.route('/bets-stats' , methods=['GET', 'POST'])
 @login_required
 async def bets_stats():
-    db = get_db()
-    session = await db.__anext__()
+    session = AsyncSessionLocal()
     round_service = RoundService(session)
 
     try:
@@ -51,8 +47,7 @@ async def bets_stats():
 @bets_stats_bp.route('/end-round', methods=['POST'])
 @login_required
 async def end_round():
-    db = get_db()
-    session = await db.__anext__()
+    session = await AsyncSessionLocal()
     try:
         round_service = RoundService(session)
 
@@ -70,3 +65,5 @@ async def end_round():
         return jsonify({"message": "Раунд успешно завершён"}), 200
     finally:
         await session.close()
+
+

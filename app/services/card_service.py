@@ -7,15 +7,10 @@ class CardService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_card(self, image_url: str, round_id: int, total_bones: int = 0, total_not: int = 0,
-                          total_bank: int = 0, is_winner: bool = False):
+    async def create_card(self, image_url: str, round_id: int):
         new_card = Card(
             image_url=image_url,
-            round_id=round_id,
-            total_bones=total_bones,
-            total_not=total_not,
-            total_bank=total_bank,
-            is_winner=is_winner
+            round_id=round_id
         )
         self.session.add(new_card)
         await self.session.commit()
