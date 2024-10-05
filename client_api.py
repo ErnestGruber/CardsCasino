@@ -1,8 +1,8 @@
 import logging
 import signal
 import sys
-
 from fastapi import FastAPI
+from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 from app.api import game_api, user_api, deposit_api, bets_stats_api, cashout_api
 
@@ -16,6 +16,8 @@ app = FastAPI( title="Deposit API",
     docs_url="/docs",          # Можно изменить при необходимости
     redoc_url="/redoc",        # Можно изменить при необходимости
     openapi_url="/openapi.json",)
+
+app.add_middleware(HTTPSRedirectMiddleware)
 
 # Подключаем различные API
 app.include_router(user_api, prefix="/api/users", tags=["Users"])
