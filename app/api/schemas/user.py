@@ -36,6 +36,7 @@ class UserInfoResponseModel(BaseModel):
     username: str
     bones: int
     not_tokens: int
+    is_referral: bool
 
 
 # Модель для истории ставок и бонусов
@@ -46,6 +47,8 @@ class UserStatsResponseModel(BaseModel):
     total_won_not: float
     total_referral_bonus: float
 
+class UserHasBetResponse(BaseModel):
+    hasBet: bool
 
 # Модель для регистрации нового пользователя
 class RegisterUserRequest(BaseModel):

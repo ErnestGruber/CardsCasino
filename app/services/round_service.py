@@ -4,6 +4,7 @@ from datetime import datetime
 
 from app.models import Card
 from app.models.round import Round
+from app.services import RoundStatsService
 
 
 class RoundService:
@@ -27,7 +28,20 @@ class RoundService:
         cards = [Card(image_url=url, round_id=new_round.id) for url in card_urls]
         self.session.add_all(cards)
         await self.session.commit()
+        # Добавляем статистику:
+        # Создаем статистику раунда с начальными значениями
+        round_stats_service = RoundStatsService(self.session)
 
+        # Создание статистики раунда с начальными значениями
+        await round_stats_service.create_round_stats(
+            round_id=new_round.id,
+            total_bones=0.0,  # Начальное значение
+            total_not=0.0,  # Начальное значение
+            total_bank=0.0,  # Начальное значение
+            admin_fee=0.0,  # Комиссия администратора (примерное значение, можно изменить)
+            bones_coefficient=0.0,  # Начальное значение
+            not_coefficient=0.0,  # Начальное значение
+        )
         return new_round
 
     async def get_round_by_id(self, round_id: int):

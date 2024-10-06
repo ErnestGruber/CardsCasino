@@ -4,6 +4,7 @@ from quart import Blueprint, render_template, jsonify, redirect, url_for, reques
 
 from admin_routes.required import login_required
 from app.db import get_db
+from app.db.session import AsyncSessionLocal
 from app.services import DepositService
 
 deposit = Blueprint('deposits', __name__)
@@ -12,8 +13,7 @@ deposit = Blueprint('deposits', __name__)
 @deposit.route('/deposits', methods=['GET'])
 @login_required
 async def get_deposits():
-    db = get_db()
-    session = await db.__anext__()
+    session = AsyncSessionLocal()
 
     # Получаем параметры фильтрации
     created_from = request.args.get('created_from')
@@ -48,8 +48,7 @@ async def get_deposits():
 @deposit.route('/deposits/reject/<int:deposit_id>', methods=['POST'])
 @login_required
 async def reject_deposit(deposit_id):
-    db = get_db()
-    session = await db.__anext__()
+    session = AsyncSessionLocal()
     try:
         deposit_service = DepositService(session)
         success = await deposit_service.reject_deposit(deposit_id)
@@ -65,8 +64,7 @@ async def reject_deposit(deposit_id):
 @deposit.route('/deposits/approve/<int:deposit_id>', methods=['POST'])
 @login_required
 async def approve_deposit(deposit_id):
-    db = get_db()
-    session = await db.__anext__()  # Асинхронная сессия
+    session = AsyncSessionLocal()
     try:
         deposit_service = DepositService(session)
 

@@ -3,16 +3,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.db.session import get_db
-from app.services import UserService, CardService, BetService, RoundService
+from app.services import UserService, CardService, BetService, RoundService, DepositService, RoundStatsService
 from app.utils import process_referral_bonus
 from app.utils.users import get_token_from_header
-from app.api.schemas.game import GameResponseModel, BetRequest, BetResponseModel  # Импортируем схемы
+from app.api.schemas.game import GameResponseModel, BetRequest, BetResponseModel, GameBank  # Импортируем схемы
 
 game_api = APIRouter()
 
 
 # получение активного раунда и карт для фронта
-@game_api.get("/game", response_model=GameResponseModel)
+@game_api.get("/current-game", response_model=GameResponseModel)
 async def get_game(db: AsyncSession = Depends(get_db)):
     round_service = RoundService(db)
     card_service = CardService(db)
@@ -32,7 +32,7 @@ async def get_game(db: AsyncSession = Depends(get_db)):
 
 
 # Выбор карты и размещение ставки
-@game_api.post("/choose_card/{card_id}", response_model=BetResponseModel)
+@game_api.post("/choose-card/{card_id}", response_model=BetResponseModel)
 async def choose_card(card_id: int, bet_request: BetRequest, db: AsyncSession = Depends(get_db), token_value: str = Depends(get_token_from_header)):
     user_service = UserService(db)
     card_service = CardService(db)
@@ -81,3 +81,26 @@ async def choose_card(card_id: int, bet_request: BetRequest, db: AsyncSession = 
             await process_referral_bonus(user, referrer, bet_request.bet_amount, bet_request.bet_type, new_bet.id, db)
 
     return {"success": "Bet placed successfully", "bet_id": new_bet.id}
+
+# Метод на получение всех заявок на пополнение
+@game_api.get('/current-bank', response_model=GameBank)
+async def get_deposits(
+        db: AsyncSession = Depends(get_db),
+        token_value: str = Depends(get_token_from_header)
+):
+    user_service = UserService(db)
+    round_stats_service = RoundStatsService(db)
+    round_service = RoundService(db)
+    user = await user_service.get_user_by_token(token_value)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    active_round = await round_service.get_active_round()
+    if not active_round:
+        raise HTTPException(status_code=404, detail="Round not found")
+
+    round_stats = await round_stats_service.get_round_stats_by_round_id(active_round.id)
+    result = round_stats.total_bank
+    return {
+        'total_bank': result
+    }

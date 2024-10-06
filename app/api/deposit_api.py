@@ -1,27 +1,12 @@
 import re
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel, Field, validator
 from app.db import get_db
 from app.services import UserService
 from app.services.deposit_service import DepositService
 from app.utils.users import get_token_from_header
-from app.api.schemas.deposit import DepositResponseModel, DepositsListResponseModel  # Импортируем схемы
+from app.api.schemas.deposit import DepositResponseModel, DepositsListResponseModel,DepositRequestModel  # Импортируем схемы
 
-
-# Модель для запроса на пополнение
-class DepositRequestModel(BaseModel):
-    wallet_address: str = Field(..., description="Wallet address of the user")
-    amount: int = Field(..., gt=0, description="Amount to deposit")
-
-    @validator('wallet_address')
-    def validate_wallet_address(cls, value):
-        pattern = r'^[A-Za-z0-9-]{43,50}$'
-        if not re.match(pattern, value):
-            raise ValueError(
-                'Invalid wallet address format. It should be between 43 and 50 characters long, and contain only alphanumeric characters and dashes.'
-            )
-        return value
 
 
 deposit_api = APIRouter()

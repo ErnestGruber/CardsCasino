@@ -20,6 +20,9 @@ class GameResponseModel(BaseModel):
     round: RoundModel
     cards: List[CardModel]
 
+class GameBank(BaseModel):
+    total_bank: float
+
 
 # Модель для запроса на ставку
 class BetRequest(BaseModel):
@@ -28,7 +31,7 @@ class BetRequest(BaseModel):
     bet_amount: int
 
 
-# Модель для ответа при размещении ставки
+# Модель для ответа при размещении ставки FixMe - убрать id на проде
 class BetResponseModel(BaseModel):
     success: str
     bet_id: int

@@ -9,10 +9,10 @@ from app.db.session import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Bet, ReferralStats
-from app.services import UserService, ReferralStatsService, RoundStatsService
+from app.services import UserService, ReferralStatsService, RoundStatsService, BetService, RoundService
 from app.utils.users import get_token_from_header
 from app.api.schemas.user import (LoginRequest, LoginResponseModel, ReferralStatsResponseModel, UserInfoResponseModel,
-                          UserStatsResponseModel, RegisterUserRequest)  # Импортируем схемы
+                                  UserStatsResponseModel, RegisterUserRequest, UserHasBetResponse)  # Импортируем схемы
 user_api = APIRouter()
 
 # Секретный ключ для защиты регистраций
@@ -48,6 +48,43 @@ async def api_login(
         'bones': user.bones,
         'is_admin': user.is_admin
     }
+
+# Регистрация пользователя
+@user_api.post('/register-user', response_model=LoginResponseModel)
+async def register_user(
+    request_data: RegisterUserRequest,
+    db: AsyncSession = Depends(get_db),
+    secret_key: str = Header(None, alias="Secret-Key")
+):
+    if secret_key != "HAHAHA":
+        raise HTTPException(status_code=403, detail="Invalid secret key")
+
+    user_service = UserService(db)
+
+    existing_user = await user_service.get_user_by_id(request_data.user_id)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User already exists")
+
+    referred_by_user = None
+    if request_data.referral_code:
+        referred_by_user = await user_service.get_user_by_referral_code(request_data.referral_code)
+        if not referred_by_user:
+            raise HTTPException(status_code=404, detail="Referrer not found")
+
+    permanent_token = await generate_permanent_token(user_service)
+    new_referral_code = await generate_referral_code(user_service)
+
+    new_user = await user_service.create_user(
+        id=request_data.user_id,
+        username=request_data.username,
+        bones=100,
+        not_tokens=100,
+        referral_code=new_referral_code,
+        referred_by=referred_by_user.referral_code if referred_by_user else None,
+        token=permanent_token,
+    )
+
+    return {"message": "User successfully registered", "user_id": new_user.id, "token": permanent_token}
 
 
 # Получение реферальной статистики
@@ -91,12 +128,14 @@ async def get_user_info(
     token_value: str = Depends(get_token_from_header)
 ):
     user_service = UserService(db)
-
+    is_referral = False
     user = await user_service.get_user_by_token(token_value)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    return {"id": user.id, "username": user.username, "bones": user.bones, "not_tokens": user.not_tokens}
+    if user.referral_code:
+        is_referral = True
+    return {"id": user.id, "username": user.username, "bones": user.bones, "not_tokens": user.not_tokens,
+            "is_referral": is_referral}
 
 
 # Получение статистики пользователя
@@ -140,43 +179,21 @@ async def get_user_stats(
         'total_referral_bonus': total_referral_wins
     }
 
-
-# Регистрация пользователя
-@user_api.post('/register-user', response_model=LoginResponseModel)
-async def register_user(
-    request_data: RegisterUserRequest,
-    db: AsyncSession = Depends(get_db),
-    secret_key: str = Header(None, alias="Secret-Key")
+@user_api.get('/has-user-bet', response_model=UserHasBetResponse)
+async def get_has_user_bet(
+        db: AsyncSession = Depends(get_db),
+        token_value: str = Depends(get_token_from_header)
 ):
-    if secret_key != "HAHAHA":
-        raise HTTPException(status_code=403, detail="Invalid secret key")
-
     user_service = UserService(db)
+    bet_service = BetService(db)
+    round_service = RoundService(db)
+    user = await user_service.get_user_by_token(token_value)
+    active_round = await round_service.get_active_round()
+    result = await bet_service.has_user_bet_in_round(user.id, active_round.id)
+    return {
+        "hasBet": result
+    }
 
-    existing_user = await user_service.get_user_by_id(request_data.user_id)
-    if existing_user:
-        raise HTTPException(status_code=400, detail="User already exists")
-
-    referred_by_user = None
-    if request_data.referral_code:
-        referred_by_user = await user_service.get_user_by_referral_code(request_data.referral_code)
-        if not referred_by_user:
-            raise HTTPException(status_code=404, detail="Referrer not found")
-
-    permanent_token = await generate_permanent_token(user_service)
-    new_referral_code = await generate_referral_code(user_service)
-
-    new_user = await user_service.create_user(
-        id=request_data.user_id,
-        username=request_data.username,
-        bones=100,
-        not_tokens=100,
-        referral_code=new_referral_code,
-        referred_by=referred_by_user.referral_code if referred_by_user else None,
-        token=permanent_token,
-    )
-
-    return {"message": "User successfully registered", "user_id": new_user.id, "token": permanent_token}
 
 
 # Генерация уникального реферального кода

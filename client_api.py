@@ -1,7 +1,7 @@
 import signal
 import sys
-
 from fastapi import FastAPI
+from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 from app.api import bets_stats_api, cashout_api, deposit_api, game_api, user_api
 
@@ -18,6 +18,8 @@ app = FastAPI(
     openapi_url="/openapi.json",
     swagger_ui_parameters={"syntaxHighlight.theme": "obsidian"},
 )
+
+app.add_middleware(HTTPSRedirectMiddleware)
 
 # Подключаем различные API
 app.include_router(user_api, prefix="/api/users", tags=["Users"])
