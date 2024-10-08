@@ -29,7 +29,8 @@ jobs:
                 script: |
                     cd /home/github/casino/CardsCasino
                     git pull git@github.com:ErnestGruber/CardsCasino.git master
-                    make develop
+                    sudo make develop
+                    12qwaszx!@QWASZX
                     source .venv/bin/activate
                     uvicorn client_api:app --host 0.0.0.0 --port 8000
                     
