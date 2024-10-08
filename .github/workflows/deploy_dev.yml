@@ -30,6 +30,6 @@ jobs:
                     cd /home/github/casino/CardsCasino
                     git pull git@github.com:ErnestGruber/CardsCasino.git master
                     deactivate
-                    sudo make develop
+                    make develop
                     source .venv/bin/activat
                     
