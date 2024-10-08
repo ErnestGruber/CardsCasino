@@ -31,4 +31,5 @@ jobs:
                     git pull git@github.com:ErnestGruber/CardsCasino.git master
                     make develop
                     source .venv/bin/activate
+                    uvicorn client_api:app --host 0.0.0.0 --port 8000
                     
